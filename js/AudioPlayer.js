@@ -50,7 +50,7 @@ var AudioPlayer = function() {
 	//*********************************************************************************** Construct
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;
 	if(window.AudioContext == null)
-		return addError("Web Audio API is not supported on this browser.");
+		return system.addError("Web Audio API is not supported on this browser.");
 	
 	this.fields.audio.ctx = new AudioContext();
 
@@ -60,20 +60,20 @@ AudioPlayer.prototype = {
 		//*********************************************************************************** Queueing
 		loadBufferFromURL: function(p_url, p_callback, p_progCallback) {
 			if(!this.isReady())
-				return addError("Audio context has not been set");
+				return system.addError("Audio context has not been set");
 			
 			var request = new XMLHttpRequest();
 			request.open('get', p_url, true);
 			request.responseType = 'arraybuffer';
 			request.onload = function() {
 				this.fields.audio.ctx.decodeAudioData(request.response, function(p_buffer) {
-					addMessage("Loaded!");
+					system.addMessage("Loaded!");
 					this.fields.audio.nextBuffer = p_buffer;
 					this.fields.state.isNextBufferLoaded = true;
 					if(isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
-					addError("Failed to decode audio (" + e + ")");
+					system.addError("Failed to decode audio (" + e + ")");
 				});
 			};
 			request.onprogress = function(e) {
@@ -81,23 +81,23 @@ AudioPlayer.prototype = {
 					p_progCallback(e.loaded / e.total * 100);
 			};
 			this.fields.audio.nextBuffer = null;
-			addMessage("Loading audio from site...");
+			system.addMessage("Loading audio from site...");
 			request.send();
 		},
 		loadBufferFromFile: function(p_file, p_callback, p_progCallback) {
 			if(!this.isReady())
-				return addError("Audio context has not been set");
+				return system.addError("Audio context has not been set");
 			
 			var reader = new FileReader();
 			reader.onload = function() {
 				this.fields.audio.ctx.decodeAudioData(reader.result, function(p_buffer) {
-					addMessage("Loaded!");
+					system.addMessage("Loaded!");
 					this.fields.audio.nextBuffer = p_buffer;
 					this.fields.state.isNextBufferLoaded = true;
 					if(isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
-					addError("Failed to decode audio (" + e + ")");
+					system.addError("Failed to decode audio (" + e + ")");
 				});
 			};
 			reader.onprogress = function(e) {
@@ -105,14 +105,14 @@ AudioPlayer.prototype = {
 					p_progCallback(e.loaded / e.total * 100);
 			};
 			this.fields.audio.nextBuffer = null;
-			addMessage("Loading audio from file...");
+			system.addMessage("Loading audio from file...");
 			reader.readAsArrayBuffer(p_file);
 		},
 		
 		//*********************************************************************************** Playback
 		stop: function(p_resetPlaytime) {
 			if(!this.isReady())
-				return addError("Sorry, your browser doesn't support Web Audio API!");
+				return system.addError("Sorry, your browser doesn't support Web Audio API!");
 			
 			if(p_resetPlaytime) 
 				this.resetTime();
@@ -121,7 +121,7 @@ AudioPlayer.prototype = {
 				try {
 					this.fields.audio.playSource.stop(0);
 				} catch(e) {
-					addMessage("Audio has already been stopped");
+					system.addMessage("Audio has already been stopped");
 				};
 			}
 			
@@ -129,10 +129,10 @@ AudioPlayer.prototype = {
 		},
 		play: function(p_completeCallback) {
 			if(!this.isReady())
-				return addError("Sorry, your browser doesn't support Web Audio API!");
+				return system.addError("Sorry, your browser doesn't support Web Audio API!");
 			
 			if(!this.fields.state.isCurrentBufferLoaded)
-				return addError("No audio selected");
+				return system.addError("No audio selected");
 			
 			if(this.fields.state.isPlaying)
 				this.Stop(true);
@@ -156,7 +156,7 @@ AudioPlayer.prototype = {
 				this.fields.audio.playSource.buffer = this.fields.audio.currentBuffer;
 				this.fields.audio.playSource.connect(this.fields.audio.analyser);
 				
-				addMessage("Playing audio");
+				system.addMessage("Playing audio");
 
 				this.fields.audio.playSource.start(0, this.fields.state.playTimeSaved);
 				
@@ -169,22 +169,22 @@ AudioPlayer.prototype = {
 		},
 		pause: function() {
 			if(!this.isReady())
-				return addError("Sorry, your browser doesn't support Web Audio API");
+				return system.addError("Sorry, your browser doesn't support Web Audio API");
 			
 			if(!this.fields.state.isPlaying)
-				return addError("No audio is currently playing");
+				return system.addError("No audio is currently playing");
 			
 			this.fields.state.playTimeSaved += (this.fields.audio.ctx.currentTime - this.fields.state.playTimeStarted);
 			this.stop(false);
 			
-			addMessage("Paused at " + Math.floor(this.fields.state.playTimeSaved / 60) + ":" + ((this.fields.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.fields.state.playTimeSaved % 60));
+			system.addMessage("Paused at " + Math.floor(this.fields.state.playTimeSaved / 60) + ":" + ((this.fields.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.fields.state.playTimeSaved % 60));
 		},
 		playNext: function(p_completeCallback) {
 			if(!this.isReady())
-				return addError("Sorry, your browser doesn't support Web Audio API");
+				return system.addError("Sorry, your browser doesn't support Web Audio API");
 			
 			if(!this.fields.state.isNextBufferLoaded)
-				return addError("No audio is currently queue'd");
+				return system.addError("No audio is currently queue'd");
 			
 			this.fields.audio.currentBuffer = this.fields.audio.nextBuffer;
 			this.fields.state.isCurrentBufferLoaded = true;
