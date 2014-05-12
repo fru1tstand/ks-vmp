@@ -5,116 +5,140 @@
  * 5-10-14
  */
 var Playlist = function() {
-	//Internal vars
-	var
-		//Core
-		iv_playlist = new Array(),
-		iv_playedlist = new Array(),
-		iv_playNextIndex = -1,
-		iv_isQueueActive = false,
-		iv_playNextCalled = false,
-		
-		//Playlist things
-		iv_shuffle = false,
-		iv_repeat = 0				//0: none, 1: all, 2: song
-		;
+
+	this.fields = {
+		playlist: new Array(),
+		playedList: new Array(),
+		playNextIndex: -1
+	};
 	
-	//*********************************************************************************** Internals
-	var validateFileExtention = function(p_name) {
-		var ext = p_name.substring(p_name.length -3).toLowerCase();
-		return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "webm" || ext == "aac" || ext == "mp4");
-	};
-	var playPlaylist = function(p_ignorePlaying) {
-		if(iv_playlist.length < 1)
-			return addError("There are no audio files currently loaded in the playlist");
-		
-		if(p_ignorePlaying == null)
-			p_ignorePlaying = false;
-		
-		if(!p_ignorePlaying && SYSTEM_AUDIO.IsPlaying())
-			SYSTEM_AUDIO.Stop(false);
-		
-		if(!SYSTEM_AUDIO.IsAudioReady() && !SYSTEM_AUDIO.IsAudioQueueReady()) {			// Current: False	Next: False
-			if(!iv_isQueueActive)
-				queueAudio(playPlaylist);
-		} else if(!SYSTEM_AUDIO.IsAudioReady() && SYSTEM_AUDIO.IsAudioQueueReady()) {	// Current: False	Next: True
-			SYSTEM_AUDIO.PlayNext(playNextPlaylist);
-			if(!iv_isQueueActive)
-				queueAudio();
-		} else if(SYSTEM_AUDIO.IsAudioReady() && !SYSTEM_AUDIO.IsAudioQueueReady()) {	// Current: True	Next: False
-			if(!SYSTEM_AUDIO.IsPlaying())
-				SYSTEM_AUDIO.Play(playNextPlaylist);
-			if(!iv_isQueueActive)
-				queueAudio();
-		} else { 																		// Current: True	Next: True
-			if(!SYSTEM_AUDIO.IsPlaying())
-				SYSTEM_AUDIO.Play(playNextPlaylist);
-		}
-	};
-	var playNextPlaylist = function(p_ignorePlaying) {
-		if(iv_isQueueActive) {
-			addMessage("Waiting for audio to load before playing")
-			iv_playNextCalled = true;
-		} else {
-			SYSTEM_AUDIO.ClearCurrentBuffer();
-			playPlaylist();
-		}
-	};
-	var indexNextSong = function() {
-		if(iv_repeat == 2)
-			return true;
-		
-		iv_playNextIndex = ((iv_shuffle) ? Math.round(Math.random() * iv_playlist.length) : (++iv_playNextIndex % iv_playlist.length));
-		
-		if(iv_repeat == 0) {
-			if(iv_playedlist.length == iv_playlist.length)
-				return false;
+	this.internals = {
+		validateFileExtention: function(p_name) {
+			var ext = p_name.substring(p_name.length -3).toLowerCase();
+			return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "webm" || ext == "aac" || ext == "mp4");
+		},
+		playPlaylist: function(p_ignorePlaying) {
+			if(this.fields.playlist.length < 1)
+				return system.addError("There are no audio files currently loaded in the playlist");
 			
-			var matchFound = false;
-			do {
-				matchFound = false;
-				for(var i = 0; i < iv_playedlist.length; i++) {
-					if(iv_playNextIndex == iv_playedlist[i]) {
-						matchFound = true;
-						iv_playNextIndex = (++iv_playNextIndex % iv_playlist.length);
-						break;
-					}
-				}
-			} while(matchFound);
-		}
-		
-		iv_playedlist.push = iv_playNextIndex;
-		addMessage("Next audio file is " + iv_playlist[iv_playNextIndex].name + " (Indexed at " + iv_playNextIndex + ")");
-		return true;
-	};
-	var queueAudio = function(p_loadCompleteCallback) {
-		if(!indexNextSong())
-			return addMessage("That's the end of this playlist");
-
-		iv_isQueueActive = true;
-		SYSTEM_AUDIO.LoadBufferFromFile(iv_playlist[iv_playNextIndex], function() {
-			iv_isQueueActive = false;
-			if(iv_playNextCalled) {
-				iv_playNextCalled = false;
-				playNextPlaylist();
+			if(p_ignorePlaying == null)
+				p_ignorePlaying = false;
+			
+			if(!p_ignorePlaying && system.audioPlayer.isPlaying())
+				system.audioPlayer.Stop(false);
+			
+			if(!system.audioPlayer.isAudioReady() && !system.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
+				if(!this.state.isQueueActive)
+					this.internals.queueAudio(this.internals.playPlaylist);
+			} else if(!system.audioPlayer.isAudioReady() && system.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
+				system.audioPlayer.PlayNext(this.playNextPlaylist);
+				if(!this.state.isQueueActive)
+					this.internals.queueAudio();
+			} else if(system.audioPlayer.isAudioReady() && !system.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
+				if(!system.audioPlayer.isPlaying())
+					system.audioPlayer.play(this.internals.playNextPlaylist);
+				if(!this.state.isQueueActive)
+					this.internals.queueAudio();
+			} else { 																		// Current: True	Next: True
+				if(!system.audioPlayer.isPlaying())
+					system.audioPlayer.play(this.internals.playNextPlaylist);
 			}
-			if(isMethod(p_loadCompleteCallback))
-				p_loadCompleteCallback();
-		});
+		},
+		playNextPlaylist: function(p_ignorePlaying) {
+			if(this.state.isQueueActive) {
+				system.addMessage("Waiting for audio to load before playing");
+				this.state.playNextCalled = true;
+			} else {
+				system.audioPlayer.ClearCurrentBuffer();
+				this.internals.playPlaylist();
+			}
+		},
+		indexNextSong: function() {
+			if(this.state.repeat == 2)
+				return true;
+			
+			this.fields.playNextIndex = ((this.state.shuffle) ? Math.round(Math.random() * this.fields.playlist.length) : (++this.fields.playNextIndex % this.fields.playlist.length));
+			
+			if(this.state.repeat == 0) {
+				if(this.fields.playedList.length == this.fields.playlist.length)
+					return false;
+				
+				var matchFound = false;
+				do {
+					matchFound = false;
+					for(var i = 0; i < this.playedList.length; i++) {
+						if(this.fields.playNextIndex == this.playedList[i]) {
+							matchFound = true;
+							this.fields.playNextIndex = (++this.fields.playNextIndex % this.fields.playlist.length);
+							break;
+						}
+					}
+				} while(matchFound);
+			}
+			
+			this.fields.playedList.push(this.fields.playNextIndex);
+			system.addMessage("Next audio file is " + this.fields.playlist[this.fields.playNextIndex].name + " (Indexed at " + this.fields.playNextIndex + ")");
+			return true;
+		},
+		queueAudio: function(p_loadCompleteCallback) {
+			if(!this.internals.indexNextSong())
+				return system.addMessage("That's the end of this playlist");
+
+			this.state.isQueueActive = true;
+			SYSTEM_AUDIO.LoadBufferFromFile(this.fields.playlist[this.fields.playNextIndex], function() {
+				this.state.isQueueActive = false;
+				if(this.state.playNextCalled) {
+					this.state.playNextCalled = false;
+					this.internals.playNextPlaylist();
+				}
+				if(isMethod(p_loadCompleteCallback))
+					p_loadCompleteCallback();
+			});
+		}
 	};
 	
-	//*********************************************************************************** Methods
-	this.add = function(p_file) {
-		if(p_file instanceof File && validateFileExtention(p_file.name))
-			iv_playlist.push(p_file);
-		else
-			addError("The object passed was not a file!");
+	this.state = {
+		isQueueActive: false,
+		playNextCalled: false,
+		shuffle: false,
+		repeat: 0				//0: none, 1: all, 2: song
 	};
-	this.play = function() {
-		playPlaylist();
-	};
-	this.setRepeat = function(p_repeat) {
-		iv_repeat = p_repeat;
-	};
+};
 
+Playlist.prototype = {
+	add: function(p_file) {
+		if(p_file instanceof File && this.internals.validateFileExtention(p_file.name))
+			this.fields.playlist.push(p_file);
+		else
+			system.addError("The object passed was not a file!");
+	},
+	play: function() {
+		this.internals.playPlaylist();
+	},
+	setRepeat: function(p_repeat) {
+		this.fields.playedList = new Array();
+		
+		switch(p_repeat) {
+		case "none":
+		case "0":
+		case 0:
+			this.state.repeat = 0;
+			break;
+		
+		case "one":
+		case "song":
+		case "2":
+		case 2:
+			this.state.repeat = 2;
+			break;
+			
+		case "all":
+		case "playlist":
+		case "1":
+		case 1:
+		default:
+			this.state.repeat = 1;
+			break;
+		}
+	}
 };
