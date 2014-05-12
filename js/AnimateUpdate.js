@@ -1,59 +1,62 @@
 /**
- * Visual Music Project: Animate Update 1.0
+ * Visual Music Project: Animate Update 3.0
  * 
  * Kodlee Yin
  * 5-9-14
  */
 var AnimateUpdate = function() {
 	//Internal Object Vars
-	var
-		//Animation Frame
-		iv_requestAnimationFrame = null,
-		
-		//Drawing
-		iv_drawStart = 0,
-		iv_drawDiff = 0,
-		iv_startTime = 0,
-		iv_isUpdating = false,
-		iv_animationCallback = null;
+	this.fields = {
+		drawStart: 0,
+		drawDiff: 0,
+		startTime: 0
+	};
 	
-	//*********************************************************************************** Internals
-	var animate = function() {
-		iv_drawStart = Date.now();
-		iv_drawDiff = iv_drawStart - iv_startTime;
-		
-		if(isMethod(iv_animationCallback))
-			iv_animationCallback(iv_drawDiff);
-		
-		iv_startTime = iv_drawStart;
-		
-		if(iv_isUpdating)
-			iv_requestAnimationFrame(Animate);
+	this.events = {
+		animate: null
+	};
+	
+	this.internal = {
+		requestAnimationFrame: null,
+		animate: function() {
+			this.fields.drawStart = Date.now();
+			this.fields.drawDiff = this.fields.drawStart - this.fields.startTime;
+			
+			if(isMethod(this.internal.animationCallback))
+				this.events.animate(this.fields.drawDiff);
+			
+			this.fields.startTime = this.fields.drawStart;
+			
+			if(this.state.isUpdating)
+				this.internal.requestAnimationFrame(this.internal.animate);
+		}
+	};
+	
+	this.state = {
+		isUpdating: false
 	};
 	
 	//*********************************************************************************** Construct
-	this.CONSTRUCTOR = function() {
-		iv_requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-		if(iv_requestAnimationFrame == null)
-			return addError("Your browser doesn't support calling animation frames");
-	};
-	this.CONSTRUCTOR();
-	
-	//*********************************************************************************** Controls
-	this.start = function() {
-		if(iv_requestAnimationFrame == null)
-			return addError("Your browser doesn't support calling animation frames");
-		
-		iv_isUpdating = true;
-		iv_startTime = Date.now();
-		iv_requestAnimationFrame(Animate);
-	};
-	this.stop = function () {
-		iv_isUpdating = false;
-	};
-	this.setCallback = function(p_callback) {
-		iv_animationCallback = p_callback;
-	};
-	
+	iv_requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+	if(iv_requestAnimationFrame == null)
+		return system.addError("Your browser doesn't support calling animation frames");
 
+};
+
+AnimateUpdate.prototype = {
+		//*********************************************************************************** Controls
+		start: function() {
+			if(this.internal.requestAnimationFrame == null)
+				return system.addError("Your browser doesn't support calling animation frames");
+			
+			this.state.isUpdating = true;
+			this.fields.startTime = Date.now();
+			this.internal.requestAnimationFrame(this.internal.animate);
+		},
+		stop: function () {
+			this.state.isUpdating = false;
+		},
+		setCallback: function(p_callback) {
+			this.events.animate = p_callback;
+		}
 };
