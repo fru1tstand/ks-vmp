@@ -4,7 +4,6 @@
 		<meta charset="UTF-8">
 		<title>The Visual Music Project - KodleeShare</title>
 
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.js"></script>
 		<script src="js/AudioPlayer.js"></script>
 		<script src="js/VMPShared.js"></script>
 		<script>
@@ -24,9 +23,6 @@
 // 				};
 // 				a.send();
 // 			};
-			$(function() {
-				$('body').load('themes/minimalist.php');
-			});
 
 			var onloadReplaceAndEval = function(a) {
 				document.getElementById('body').innerHTML = a.response;
@@ -53,6 +49,7 @@
 				a.send();
 			};
 			//window.onload = replaceBodyAndEvalScripts;
+			window.onload = function() { system.loadTheme("themes/minimalist.php"); };
 		</script>
 	</head>
 	

@@ -17,7 +17,12 @@ var System = function() {
 	
 	this.fields = {
 		messageDebug: true,
-		errorDebug: true
+		errorDebug: true,
+		
+		//Them loading
+		themeScriptsLoading: 0,
+		themeScriptsExecuteList: new Array(),
+		themeScriptsExecute: false
 	};
 	this.events = {
 		message: null,
@@ -52,13 +57,49 @@ System.prototype = {
 		
 		//*********************************************************************************** Ajaxify
 		ajaxLoad: function(p_url, p_callback) {
-			var request = new XMLHttpRequest();
+			var self = this,
+				request = new XMLHttpRequest();
 			request.open("get", p_url, true);
 			request.onload = function () {
-				if(isMethod(p_callback))
+				if(self.isMethod(p_callback))
 					p_callback(request);
 			};
 			request.send();
+		},
+		
+		//*********************************************************************************** Themify
+		loadTheme: function(p_location) {
+			var self = this;
+			this.ajaxLoad(p_location, function(r) {
+				document.body.innerHTML = r.response;
+				var scriptElems = document.body.getElementsByTagName("script");
+				for(var i = 0; i < scriptElems.length; i++) {
+					if(scriptElems[i].src == "") {
+						self.fields.themeScriptsExecuteList.push(scriptElems[i].innerHTML);
+					} else {
+						self.fields.themeScriptsLoading++;
+						self.ajaxLoad(scriptElems[i].src, function(s) {
+							eval(s.response);
+							self.fields.themeScriptsLoading--;
+							if(self.fields.themeScriptsLoading == 0 && self.fields.themeScriptsExecute) {
+								for(var j = 0; j < self.fields.themeScriptsExecuteList.length; j++) {
+									eval(self.fields.themeScriptsExecuteList[j]);
+									self.fields.themeScriptsExecuteList[j] = null;
+								}
+							}
+						});
+					}
+				}
+				if(self.fields.themeScriptsLoading == 0) {
+					for(var j = 0; j < self.fields.themeScriptsExecuteList.length; j++) {
+						if(self.fields.themeScriptsExecuteList[j] != null) {
+							eval(self.fields.themeScriptsExecuteList[j]);
+							self.fields.themeScriptsExecuteList[j] = null;
+						}
+					}
+				}
+				self.fields.themeScriptsExecute = true;
+			});
 		}
 };
 
