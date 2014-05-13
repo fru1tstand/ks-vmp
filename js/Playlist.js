@@ -31,7 +31,7 @@ var Playlist = function() {
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio(self.internals.playPlaylist);
 			} else if(!system.audioPlayer.isAudioReady() && system.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
-				system.audioPlayer.playNext(self.playNextPlaylist);
+				system.audioPlayer.playNext(self.internals.playNextPlaylist);
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio();
 			} else if(system.audioPlayer.isAudioReady() && !system.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
