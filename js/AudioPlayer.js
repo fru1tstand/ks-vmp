@@ -5,6 +5,7 @@
  * 5-9-14
  */
 var AudioPlayer = function() {
+	var self = this;
 	//Internal Object Vars
 	this.fields = {
 		audio: {
@@ -33,16 +34,16 @@ var AudioPlayer = function() {
 		//Bugfix for Chrome
 		//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
 		checkOnEnded: function() {
-			if(!iv_isPlaying || iv_audioCurrentBuffer == null)
+			if(!self.fields.state.isPlaying || self.fields.audio.currentBuffer == null)
 				return;
 			
-			if(system.audioPlayer.getPlayTime() > system.audioPlayer.getCurrentAudioLength()) {
-				system.audioPlayer.stop(true);
+			if(self.getPlayTime() > self.getCurrentAudioLength()) {
+				self.stop(true);
 				
-				if(isMethod(this.events.onEnded))
-					this.events.onEnded();
+				if(system.isMethod(self.events.onEnded))
+					self.events.onEnded();
 			} else {
-				setTimeout(this.events.checkOnEnded, 500);
+				setTimeout(self.events.checkOnEnded, 500);
 			}
 		}
 	};
@@ -59,6 +60,8 @@ var AudioPlayer = function() {
 AudioPlayer.prototype = {
 		//*********************************************************************************** Queueing
 		loadBufferFromURL: function(p_url, p_callback, p_progCallback) {
+			var self = this;
+			
 			if(!this.isReady())
 				return system.addError("Audio context has not been set");
 			
@@ -66,18 +69,18 @@ AudioPlayer.prototype = {
 			request.open('get', p_url, true);
 			request.responseType = 'arraybuffer';
 			request.onload = function() {
-				this.fields.audio.ctx.decodeAudioData(request.response, function(p_buffer) {
+				self.fields.audio.ctx.decodeAudioData(request.response, function(p_buffer) {
 					system.addMessage("Loaded!");
-					this.fields.audio.nextBuffer = p_buffer;
-					this.fields.state.isNextBufferLoaded = true;
-					if(isMethod(p_callback))
+					self.fields.audio.nextBuffer = p_buffer;
+					self.fields.state.isNextBufferLoaded = true;
+					if(system.isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
 					system.addError("Failed to decode audio (" + e + ")");
 				});
 			};
 			request.onprogress = function(e) {
-				if(isMethod(p_progCallback) && e.lengthComputable)
+				if(system.isMethod(p_progCallback) && e.lengthComputable)
 					p_progCallback(e.loaded / e.total * 100);
 			};
 			this.fields.audio.nextBuffer = null;
@@ -85,23 +88,25 @@ AudioPlayer.prototype = {
 			request.send();
 		},
 		loadBufferFromFile: function(p_file, p_callback, p_progCallback) {
+			var self = this;
+			
 			if(!this.isReady())
 				return system.addError("Audio context has not been set");
 			
 			var reader = new FileReader();
 			reader.onload = function() {
-				this.fields.audio.ctx.decodeAudioData(reader.result, function(p_buffer) {
+				self.fields.audio.ctx.decodeAudioData(reader.result, function(p_buffer) {
 					system.addMessage("Loaded!");
-					this.fields.audio.nextBuffer = p_buffer;
-					this.fields.state.isNextBufferLoaded = true;
-					if(isMethod(p_callback))
+					self.fields.audio.nextBuffer = p_buffer;
+					self.fields.state.isNextBufferLoaded = true;
+					if(system.isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
 					system.addError("Failed to decode audio (" + e + ")");
 				});
 			};
 			reader.onprogress = function(e) {
-				if(isMethod(p_progCallback) && e.lengthComputable)
+				if(system.isMethod(p_progCallback) && e.lengthComputable)
 					p_progCallback(e.loaded / e.total * 100);
 			};
 			this.fields.audio.nextBuffer = null;
@@ -163,7 +168,7 @@ AudioPlayer.prototype = {
 				this.fields.state.playTimeStarted = this.fields.audio.ctx.currentTime;
 				this.fields.state.isPlaying = true;
 				
-				this.fields.audio.anaylserData = new Uint8Array(this.fields.audio.analyser.frequencyBinCount);
+				this.fields.audio.analyserData = new Uint8Array(this.fields.audio.analyser.frequencyBinCount);
 				this.events.checkOnEnded();
 			}
 		},
@@ -216,7 +221,7 @@ AudioPlayer.prototype = {
 			if(this.fields.audio.analyser == null)
 				return new Array(1);
 			
-			this.fields.audio.anaylser.getByteFrequencyData(this.fields.audio.analyserData);
+			this.fields.audio.analyser.getByteFrequencyData(this.fields.audio.analyserData);
 			return this.fields.audio.analyserData;
 		},
 		getPlayTime: function() {
