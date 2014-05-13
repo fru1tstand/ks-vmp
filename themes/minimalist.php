@@ -116,13 +116,13 @@
 
 	
 	document.getElementById('button_stop').onclick = function() {
-		SYSTEM_AUDIO.Stop(true);
+		system.audioPlayer.stop(true);
 	};
 	document.getElementById('button_play').onclick = function() {
 		mPlaylist.play();
 	};
 	document.getElementById('button_pause').onclick = function() {
-		SYSTEM_AUDIO.Pause();
+		system.audioPlayer.pause();
 	};
 
 	var vis = new Spectrum("freq_", 128, "squared");
@@ -131,16 +131,16 @@
 	var timer = document.getElementById("time");
 	var cPlayTime = 0;
 	
-	AnimateUpdate.SetCallback(function(pDiff) {
-		vis.Update(SYSTEM_AUDIO.GetFrequencyData());
+	AnimateUpdate.setCallback(function(pDiff) {
+		vis.update(system.audioPlayer.getFrequencyData());
 		fpsCounter.innerHTML = (1 / pDiff * 1000 + " ups");
-		cPlayTime = SYSTEM_AUDIO.GetPlayTime();
+		cPlayTime = system.audioPlayer.getPlayTime();
 		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
 	});
-	AnimateUpdate.Start();
+	AnimateUpdate.start();
 
 	function Destroy(p_callback) {
-		AnimateUpdate.Stop();
+		AnimateUpdate.stop();
 		AnimateUpdate = undefined;
 		if(isMethod(p_callback))
 			p_callback();

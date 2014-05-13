@@ -5,6 +5,8 @@
  * 5-9-14
  */
 var AnimateUpdate = function() {
+	var self = this;
+	
 	//Internal Object Vars
 	this.fields = {
 		drawStart: 0,
@@ -17,18 +19,16 @@ var AnimateUpdate = function() {
 	};
 	
 	this.internal = {
-		requestAnimationFrame: null,
 		animate: function() {
-			this.fields.drawStart = Date.now();
-			this.fields.drawDiff = this.fields.drawStart - this.fields.startTime;
+			self.fields.drawStart = Date.now();
+			self.fields.drawDiff = self.fields.drawStart - self.fields.startTime;
 			
-			if(isMethod(this.internal.animationCallback))
-				this.events.animate(this.fields.drawDiff);
+			if(system.isMethod(self.events.animate))
+				self.events.animate(self.fields.drawDiff);
 			
-			this.fields.startTime = this.fields.drawStart;
-			
-			if(this.state.isUpdating)
-				this.internal.requestAnimationFrame(this.internal.animate);
+			self.fields.startTime = self.fields.drawStart;
+			if(self.state.isUpdating)
+				window.requestAnimationFrame(self.internal.animate);
 		}
 	};
 	
@@ -37,8 +37,8 @@ var AnimateUpdate = function() {
 	};
 	
 	//*********************************************************************************** Construct
-	iv_requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-	if(iv_requestAnimationFrame == null)
+	window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+	if(!system.isMethod(window.requestAnimationFrame))
 		return system.addError("Your browser doesn't support calling animation frames");
 
 };
@@ -46,12 +46,11 @@ var AnimateUpdate = function() {
 AnimateUpdate.prototype = {
 		//*********************************************************************************** Controls
 		start: function() {
-			if(this.internal.requestAnimationFrame == null)
+			if(!system.isMethod(window.requestAnimationFrame))
 				return system.addError("Your browser doesn't support calling animation frames");
-			
 			this.state.isUpdating = true;
 			this.fields.startTime = Date.now();
-			this.internal.requestAnimationFrame(this.internal.animate);
+			window.requestAnimationFrame(this.internal.animate);
 		},
 		stop: function () {
 			this.state.isUpdating = false;

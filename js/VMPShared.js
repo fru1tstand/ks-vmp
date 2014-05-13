@@ -32,7 +32,7 @@ System.prototype = {
 		
 		//*********************************************************************************** Message handling
 		addMessage: function(p_message) {
-			if(isMethod(this.events.messageEvent))
+			if(this.isMethod(this.events.messageEvent))
 				this.events.messageEvent(p_message);
 			
 			if(this.fields.messageDebug)
@@ -41,7 +41,7 @@ System.prototype = {
 			return 1;
 		},
 		addError: function(p_message) {
-			if(isMethod(this.events.errorEvent))
+			if(this.isMethod(this.events.errorEvent))
 				this.events.errorEvent(p_message);
 			
 			if(this.fields.errorDebug)

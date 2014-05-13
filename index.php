@@ -52,8 +52,7 @@
 				};
 				a.send();
 			};
-			console.log(window);
-			window.onload = replaceBodyAndEvalScripts;
+			//window.onload = replaceBodyAndEvalScripts;
 		</script>
 	</head>
 	
