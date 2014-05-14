@@ -8,7 +8,6 @@ var AudioPlayer = function() {
 	var self = this;
 	//Internal Object Vars
 	this.fields = {
-		audio: {
 			ctx: null,
 			currentBuffer: null,
 			nextBuffer: null,
@@ -16,36 +15,35 @@ var AudioPlayer = function() {
 			
 			analyser: null,
 			analyserData: null
-		},
-		
-		state: {
+	};
+	
+	this.events = {
+			onEnded: null,
+			
+			//Bugfix for Chrome
+			//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
+			checkOnEnded: function() {
+				if(!self.state.isPlaying || self.fields.currentBuffer == null)
+					return;
+				
+				if(self.getPlayTime() > self.getCurrentAudioLength()) {
+					self.stop(true);
+					
+					if(system.isMethod(self.events.onEnded))
+						self.events.onEnded();
+				} else {
+					setTimeout(self.events.checkOnEnded, 500);
+				}
+			}
+	};
+	
+	this.state = {
 			isCurrentBufferLoaded: false,
 			isNextBufferLoaded: false,
 			
 			playTimeStarted: 0,
 			playTimeSaved: 0,
 			isPlaying: false
-		}
-	};
-	
-	this.events = {
-		onEnded: null,
-		
-		//Bugfix for Chrome
-		//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
-		checkOnEnded: function() {
-			if(!self.fields.state.isPlaying || self.fields.audio.currentBuffer == null)
-				return;
-			
-			if(self.getPlayTime() > self.getCurrentAudioLength()) {
-				self.stop(true);
-				
-				if(system.isMethod(self.events.onEnded))
-					self.events.onEnded();
-			} else {
-				setTimeout(self.events.checkOnEnded, 500);
-			}
-		}
 	};
 	
 	//*********************************************************************************** Construct
@@ -53,8 +51,7 @@ var AudioPlayer = function() {
 	if(window.AudioContext == null)
 		return system.addError("Web Audio API is not supported on this browser.");
 	
-	this.fields.audio.ctx = new AudioContext();
-
+	this.fields.ctx = new AudioContext();
 };
 
 AudioPlayer.prototype = {
@@ -69,10 +66,10 @@ AudioPlayer.prototype = {
 			request.open('get', p_url, true);
 			request.responseType = 'arraybuffer';
 			request.onload = function() {
-				self.fields.audio.ctx.decodeAudioData(request.response, function(p_buffer) {
+				self.fields.ctx.decodeAudioData(request.response, function(p_buffer) {
 					system.addMessage("Loaded!");
-					self.fields.audio.nextBuffer = p_buffer;
-					self.fields.state.isNextBufferLoaded = true;
+					self.fields.nextBuffer = p_buffer;
+					self.state.isNextBufferLoaded = true;
 					if(system.isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
@@ -83,7 +80,7 @@ AudioPlayer.prototype = {
 				if(system.isMethod(p_progCallback) && e.lengthComputable)
 					p_progCallback(e.loaded / e.total * 100);
 			};
-			this.fields.audio.nextBuffer = null;
+			this.fields.nextBuffer = null;
 			system.addMessage("Loading audio from site...");
 			request.send();
 		},
@@ -95,10 +92,10 @@ AudioPlayer.prototype = {
 			
 			var reader = new FileReader();
 			reader.onload = function() {
-				self.fields.audio.ctx.decodeAudioData(reader.result, function(p_buffer) {
+				self.fields.ctx.decodeAudioData(reader.result, function(p_buffer) {
 					system.addMessage("Loaded!");
-					self.fields.audio.nextBuffer = p_buffer;
-					self.fields.state.isNextBufferLoaded = true;
+					self.fields.nextBuffer = p_buffer;
+					self.state.isNextBufferLoaded = true;
 					if(system.isMethod(p_callback))
 						p_callback();
 				}, function(e) { //Fail call
@@ -109,7 +106,7 @@ AudioPlayer.prototype = {
 				if(system.isMethod(p_progCallback) && e.lengthComputable)
 					p_progCallback(e.loaded / e.total * 100);
 			};
-			this.fields.audio.nextBuffer = null;
+			this.fields.nextBuffer = null;
 			system.addMessage("Loading audio from file...");
 			reader.readAsArrayBuffer(p_file);
 		},
@@ -122,27 +119,27 @@ AudioPlayer.prototype = {
 			if(p_resetPlaytime) 
 				this.resetTime();
 			
-			if(this.fields.state.isPlaying) {
+			if(this.state.isPlaying) {
 				try {
-					this.fields.audio.playSource.stop(0);
+					this.fields.playSource.stop(0);
 				} catch(e) {
 					system.addMessage("Audio has already been stopped");
 				};
 			}
 			
-			this.fields.state.isPlaying = false;
+			this.state.isPlaying = false;
 		},
 		play: function(p_completeCallback) {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API!");
 			
-			if(!this.fields.state.isCurrentBufferLoaded)
+			if(!this.state.isCurrentBufferLoaded)
 				return system.addError("No audio selected");
 			
-			if(this.fields.state.isPlaying)
+			if(this.state.isPlaying)
 				this.Stop(true);
-			if(!this.fields.state.isPlaying) {
-				this.fields.audio.playSource = this.fields.audio.ctx.createBufferSource();
+			if(!this.state.isPlaying) {
+				this.fields.playSource = this.fields.ctx.createBufferSource();
 				
 				//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
 				//onended does not fire on Windows
@@ -153,22 +150,22 @@ AudioPlayer.prototype = {
 //				};
 				this.events.onEnded = p_completeCallback;
 				
-				this.fields.audio.analyser = this.fields.audio.ctx.createAnalyser();
-				this.fields.audio.analyser.minDecibels = -70;
-				this.fields.audio.analyser.maxDecibels = 0;
-				this.fields.audio.analyser.connect(this.fields.audio.ctx.destination);
+				this.fields.analyser = this.fields.ctx.createAnalyser();
+				this.fields.analyser.minDecibels = -70;
+				this.fields.analyser.maxDecibels = 0;
+				this.fields.analyser.connect(this.fields.ctx.destination);
 				
-				this.fields.audio.playSource.buffer = this.fields.audio.currentBuffer;
-				this.fields.audio.playSource.connect(this.fields.audio.analyser);
+				this.fields.playSource.buffer = this.fields.currentBuffer;
+				this.fields.playSource.connect(this.fields.analyser);
 				
 				system.addMessage("Playing audio");
 
-				this.fields.audio.playSource.start(0, this.fields.state.playTimeSaved);
+				this.fields.playSource.start(0, this.state.playTimeSaved);
 				
-				this.fields.state.playTimeStarted = this.fields.audio.ctx.currentTime;
-				this.fields.state.isPlaying = true;
+				this.state.playTimeStarted = this.fields.ctx.currentTime;
+				this.state.isPlaying = true;
 				
-				this.fields.audio.analyserData = new Uint8Array(this.fields.audio.analyser.frequencyBinCount);
+				this.fields.analyserData = new Uint8Array(this.fields.analyser.frequencyBinCount);
 				this.events.checkOnEnded();
 			}
 		},
@@ -176,38 +173,38 @@ AudioPlayer.prototype = {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API");
 			
-			if(!this.fields.state.isPlaying)
+			if(!this.state.isPlaying)
 				return system.addError("No audio is currently playing");
 			
-			this.fields.state.playTimeSaved += (this.fields.audio.ctx.currentTime - this.fields.state.playTimeStarted);
+			this.state.playTimeSaved += (this.fields.ctx.currentTime - this.state.playTimeStarted);
 			this.stop(false);
 			
-			system.addMessage("Paused at " + Math.floor(this.fields.state.playTimeSaved / 60) + ":" + ((this.fields.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.fields.state.playTimeSaved % 60));
+			system.addMessage("Paused at " + Math.floor(this.state.playTimeSaved / 60) + ":" + ((this.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.state.playTimeSaved % 60));
 		},
 		playNext: function(p_completeCallback) {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API");
 			
-			if(!this.fields.state.isNextBufferLoaded)
+			if(!this.state.isNextBufferLoaded)
 				return system.addError("No audio is currently queue'd");
 			
-			this.fields.audio.currentBuffer = this.fields.audio.nextBuffer;
-			this.fields.state.isCurrentBufferLoaded = true;
+			this.fields.currentBuffer = this.fields.nextBuffer;
+			this.state.isCurrentBufferLoaded = true;
 			
 			this.resetTime();
 			this.play(p_completeCallback);
 			
-			this.fields.state.isNextBufferLoaded = false;
+			this.state.isNextBufferLoaded = false;
 		},
 		resetTime: function() {
-			this.fields.state.playTimeSaved = 0;
-			this.fields.state.playTimeStarted = 0;
+			this.state.playTimeSaved = 0;
+			this.state.playTimeStarted = 0;
 		},
 		clearCurrentBuffer: function() {
-			this.fields.state.isCurrentBufferLoaded = false;
+			this.state.isCurrentBufferLoaded = false;
 		},
 		clearNextBuffer: function() {
-			this.fields.state.isNextBufferLoaded = false;
+			this.state.isNextBufferLoaded = false;
 		},
 		
 		//*********************************************************************************** Getters
@@ -215,32 +212,32 @@ AudioPlayer.prototype = {
 		 * Returns if web audio api is supported in the browser.
 		 */
 		isReady: function() {
-			return (this.fields.audio.ctx != null);
+			return (this.fields.ctx != null);
 		},
 		getFrequencyData: function() {
-			if(this.fields.audio.analyser == null)
+			if(this.fields.analyser == null)
 				return new Array(1);
 			
-			this.fields.audio.analyser.getByteFrequencyData(this.fields.audio.analyserData);
-			return this.fields.audio.analyserData;
+			this.fields.analyser.getByteFrequencyData(this.fields.analyserData);
+			return this.fields.analyserData;
 		},
 		getPlayTime: function() {
-			if(this.fields.state.isPlaying)
-				return this.fields.state.playTimeSaved + (this.fields.audio.ctx.currentTime - this.fields.state.playTimeStarted);
+			if(this.state.isPlaying)
+				return this.state.playTimeSaved + (this.fields.ctx.currentTime - this.state.playTimeStarted);
 			else
-				return this.fields.state.playTimeSaved;
+				return this.state.playTimeSaved;
 		},
 		getCurrentAudioLength: function() {
-			if(this.fields.audio.currentBuffer != null)
-				return this.fields.audio.currentBuffer.duration;
+			if(this.fields.currentBuffer != null)
+				return this.fields.currentBuffer.duration;
 		},
 		isAudioReady: function() {
-			return this.fields.state.isCurrentBufferLoaded;
+			return this.state.isCurrentBufferLoaded;
 		},
 		isAudioQueueReady: function() {
-			return this.fields.state.isNextBufferLoaded;
+			return this.state.isNextBufferLoaded;
 		},
 		isPlaying: function() {
-			return this.fields.state.isPlaying;
+			return this.state.isPlaying;
 		}
 };
