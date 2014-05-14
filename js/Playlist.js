@@ -13,6 +13,10 @@ var Playlist = function() {
 		audioPlayer: null
 	};
 	
+	this.events = {
+			onSongComplete: null
+	};
+	
 	this.state = {
 			isQueueActive: false,
 			playNextCalled: false,
@@ -25,12 +29,16 @@ var Playlist = function() {
 			var ext = p_name.substring(p_name.length -3).toLowerCase();
 			return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "webm" || ext == "aac" || ext == "mp4");
 		},
-		playPlaylist: function(p_ignorePlaying) {
+		playPlaylist: function(p_ignorePlaying, p_playOptions) {
 			if(self.fields.playlist.length < 1)
 				return system.addError("There are no audio files currently loaded in the playlist");
 			
 			if(p_ignorePlaying == null)
 				p_ignorePlaying = false;
+			
+			if(p_playOptions == null)
+				p_playOptions = {};
+			p_playOptions.onComplete = self.internals.playNextPlaylist;
 			
 			if(!p_ignorePlaying && self.fields.audioPlayer.isPlaying())
 				self.fields.audioPlayer.stop(false);
@@ -39,26 +47,28 @@ var Playlist = function() {
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio(self.internals.playPlaylist);
 			} else if(!self.fields.audioPlayer.isAudioReady() && self.fields.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
-				self.fields.audioPlayer.playNext(self.internals.playNextPlaylist);
+				self.fields.audioPlayer.playNext(p_playOptions);
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio();
 			} else if(self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
 				if(!self.fields.audioPlayer.isPlaying())
-					self.fields.audioPlayer.play(self.internals.playNextPlaylist);
+					self.fields.audioPlayer.play(p_playOptions);
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio();
 			} else { 																		// Current: True	Next: True
 				if(!self.fields.audioPlayer.isPlaying())
-					self.fields.audioPlayer.play(self.internals.playNextPlaylist);
+					self.fields.audioPlayer.play(p_playOptions);
 			}
 		},
-		playNextPlaylist: function(p_ignorePlaying) {
+		playNextPlaylist: function(p_ignorePlaying, p_playOptions) {
 			if(self.state.isQueueActive) {
 				system.addMessage("Waiting for audio to load before playing");
 				self.state.playNextCalled = true;
 			} else {
 				self.fields.audioPlayer.clearCurrentBuffer();
 				self.internals.playPlaylist();
+				if(system.isMethod(self.events.onSongComplete))
+					self.events.onSongComplete();
 			}
 		},
 		indexNextSong: function() {
@@ -68,7 +78,7 @@ var Playlist = function() {
 			self.fields.playNextIndex = ((self.state.shuffle) ? Math.round(Math.random() * self.fields.playlist.length) : (++self.fields.playNextIndex % self.fields.playlist.length));
 			
 			if(self.state.repeat == 0) {
-				if(self.fields.playedList.length == self.fields.playlist.length)
+				if(self.isComplete())
 					return false;
 				
 				var matchFound = false;
@@ -85,6 +95,8 @@ var Playlist = function() {
 			}
 			
 			self.fields.playedList.push(self.fields.playNextIndex);
+			//system.addMessage(self.fields.playlist);
+			//system.addMessage(self.fields.playedList);
 			system.addMessage("Next audio file is " + self.fields.playlist[self.fields.playNextIndex].name + " (Indexed at " + self.fields.playNextIndex + ")");
 			return true;
 		},
@@ -166,12 +178,18 @@ Playlist.prototype = {
 		},
 		
 		//Play control
-		play: function(p_player) {
+		play: function(p_player, p_options) {
 			if(!(p_player instanceof AudioPlayer))
 				return system.addError("Object passed was not an audio player");
 			
+			if(!p_player.isPlaying() && !p_player.isAudioQueueReady() && this.isComplete())
+				this.resetPlayedList();
+			
+			if(p_options == null)
+				p_options = {};
 			this.fields.audioPlayer = p_player;
-			this.internals.playPlaylist();
+			this.events.onSongComplete = p_options.onComplete;
+			this.internals.playPlaylist(false, p_options);
 		},
 		
 		//State setting
@@ -204,6 +222,9 @@ Playlist.prototype = {
 		setShuffle: function(p_shuffle) {
 			//This forces shuffle to be boolean
 			this.state.shuffle = (p_shuffle) ? true : false;
+		},
+		isComplete: function() {
+			return this.fields.playedList.length == this.fields.playlist.length;
 		},
 		resetPlayedList: function() {
 			this.fields.playedList = new Array();

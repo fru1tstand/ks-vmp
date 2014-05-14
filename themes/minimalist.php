@@ -57,20 +57,30 @@
 	#timebar {
 		background-color: transparent;
 		text-align: left;
-		width: 100%;
-		padding: 0;
+		
+		width: 76.8%;
+		max-width: 1024px;
+		margin: 0 auto;
+		
+		height:20px;
 		border:none;
-		margin:0;
-		border-left: 1px solid #FFF;
-		border-right: 1px solid #FFF;
+		border-bottom: 1px solid transparent;
+	}
+	#timebar:hover {
+		border-bottom: 1px solid #FFF;
 	}
 	#timebar_current {
-		height: 6px;
-		border-bottom: 1px solid #FFF;
+		border: 1px solid #FFF;
+		border-bottom:none;
 		width: 20%;
-		display:inline-block;
 		margin: 0;
 		padding: 0;
+		height:5px;
+	}
+	#timebar_offset {
+		width:100%;
+		height:15px;
+		background:transparent;
 	}
 	
 	#controls {
@@ -88,10 +98,10 @@
 			for($i = 0; $i < 128; $i++)
 				echo '<div class="spectrum_bar" id="freq_', $i, '"></div>';
 		?>
+		<div class="spectrum_baseline"></div>
 	</div>
-	
+	<div id="timebar"><div id="timebar_offset"></div><div id="timebar_current"></div></div>
 	<div class="signature">
-		<div id="timebar"><div id="timebar_current"></div></div>
 		<div id="time_string"></div>
 	</div>
 	
@@ -131,14 +141,25 @@
 	var timer = document.getElementById("time_string");
 	var cPlayTime = 0;
 	var timebar = document.getElementById("timebar_current");
+	var timebar_scrub = document.getElementById("timebar");
 	
 	AnimateUpdate.setCallback(function(pDiff) {
 		vis.update(system.audioPlayer.getFrequencyData());
 		fpsCounter.innerHTML = (1 / pDiff * 1000 + " ups");
 		cPlayTime = system.audioPlayer.getPlayTime();
 		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-		timebar.style.width = cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100 + "%";
+		timebar.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
 	});
+	
+	timebar_scrub.onclick = function(e) {
+		if(system.audioPlayer.isAudioReady()) {
+			system.audioPlayer.stop();
+			mPlaylist.play(system.audioPlayer, {
+				startTime: (e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth * system.audioPlayer.getCurrentAudioLength()
+			});
+		}
+	};
+	
 	AnimateUpdate.start();
 
 	function destroy(p_callback) {
@@ -152,6 +173,4 @@
 		if(system.isMethod(p_callback))
 			p_callback();
 	};
-
-	system.addMessage(system.audioPlayer);
 </script>

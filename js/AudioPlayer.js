@@ -129,26 +129,30 @@ AudioPlayer.prototype = {
 			
 			this.state.isPlaying = false;
 		},
-		play: function(p_completeCallback) {
+		play: function(p_options) {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API!");
 			
 			if(!this.state.isCurrentBufferLoaded)
 				return system.addError("No audio selected");
 			
+			if(p_options == null)
+				p_options = {};
+			
 			if(this.state.isPlaying)
-				this.Stop(true);
+				this.stop(true);
+			
 			if(!this.state.isPlaying) {
 				this.fields.playSource = this.fields.ctx.createBufferSource();
 				
 				//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
-				//onended does not fire on Windows
 //				iv_audioPlaySource.onended = function() {
 //					console.log("always will poop");
 //					if(isMethod(p_completeCallback))
 //						p_completeCallback();
 //				};
-				this.events.onEnded = p_completeCallback;
+				
+				this.events.onEnded = p_options.onComplete;
 				
 				this.fields.analyser = this.fields.ctx.createAnalyser();
 				this.fields.analyser.minDecibels = -70;
@@ -160,7 +164,12 @@ AudioPlayer.prototype = {
 				
 				system.addMessage("Playing audio");
 
-				this.fields.playSource.start(0, this.state.playTimeSaved);
+				if(typeof p_options.startTime == "number") {
+					this.state.playTimeSaved = p_options.startTime;
+					system.addMessage("Seeking to " + this.state.playTimeSaved);
+				}
+				this.fields.playSource.start(0, this.state.playTimeSaved); 
+
 				
 				this.state.playTimeStarted = this.fields.ctx.currentTime;
 				this.state.isPlaying = true;
@@ -181,7 +190,7 @@ AudioPlayer.prototype = {
 			
 			system.addMessage("Paused at " + Math.floor(this.state.playTimeSaved / 60) + ":" + ((this.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.state.playTimeSaved % 60));
 		},
-		playNext: function(p_completeCallback) {
+		playNext: function(p_options) {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API");
 			
@@ -192,7 +201,7 @@ AudioPlayer.prototype = {
 			this.state.isCurrentBufferLoaded = true;
 			
 			this.resetTime();
-			this.play(p_completeCallback);
+			this.play(p_options);
 			
 			this.state.isNextBufferLoaded = false;
 		},
