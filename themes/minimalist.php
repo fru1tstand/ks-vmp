@@ -107,19 +107,15 @@
 	var isShuffle = false;
 	var mPlaylist = new Playlist();
 	document.getElementById('input_songs').onchange = function() {
-		localFiles = this.files;
-		for(var i = 0; i < localFiles.length; i++)
-		{
-			mPlaylist.add(localFiles.item(i));
-		}
+ 		mPlaylist.add(this.files);
 	};
-
+	alert(typeof 3);
 	
 	document.getElementById('button_stop').onclick = function() {
 		system.audioPlayer.stop(true);
 	};
 	document.getElementById('button_play').onclick = function() {
-		mPlaylist.play();
+		mPlaylist.play(system.audioPlayer);
 	};
 	document.getElementById('button_pause').onclick = function() {
 		system.audioPlayer.pause();
