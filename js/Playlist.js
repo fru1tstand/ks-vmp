@@ -9,7 +9,15 @@ var Playlist = function() {
 	this.fields = {
 		playlist: new Array(),
 		playedList: new Array(),
-		playNextIndex: -1
+		playNextIndex: -1,
+		audioPlayer: null
+	};
+	
+	this.state = {
+			isQueueActive: false,
+			playNextCalled: false,
+			shuffle: false,
+			repeat: 0				//0: none, 1: all, 2: song
 	};
 	
 	this.internals = {
@@ -24,24 +32,24 @@ var Playlist = function() {
 			if(p_ignorePlaying == null)
 				p_ignorePlaying = false;
 			
-			if(!p_ignorePlaying && system.audioPlayer.isPlaying())
-				system.audioPlayer.stop(false);
+			if(!p_ignorePlaying && self.fields.audioPlayer.isPlaying())
+				self.fields.audioPlayer.stop(false);
 			
-			if(!system.audioPlayer.isAudioReady() && !system.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
+			if(!self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio(self.internals.playPlaylist);
-			} else if(!system.audioPlayer.isAudioReady() && system.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
-				system.audioPlayer.playNext(self.internals.playNextPlaylist);
+			} else if(!self.fields.audioPlayer.isAudioReady() && self.fields.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
+				self.fields.audioPlayer.playNext(self.internals.playNextPlaylist);
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio();
-			} else if(system.audioPlayer.isAudioReady() && !system.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
-				if(!system.audioPlayer.isPlaying())
-					system.audioPlayer.play(self.internals.playNextPlaylist);
+			} else if(self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
+				if(!self.fields.audioPlayer.isPlaying())
+					self.fields.audioPlayer.play(self.internals.playNextPlaylist);
 				if(!self.state.isQueueActive)
 					self.internals.queueAudio();
 			} else { 																		// Current: True	Next: True
-				if(!system.audioPlayer.isPlaying())
-					system.audioPlayer.play(self.internals.playNextPlaylist);
+				if(!self.fields.audioPlayer.isPlaying())
+					self.fields.audioPlayer.play(self.internals.playNextPlaylist);
 			}
 		},
 		playNextPlaylist: function(p_ignorePlaying) {
@@ -49,7 +57,7 @@ var Playlist = function() {
 				system.addMessage("Waiting for audio to load before playing");
 				self.state.playNextCalled = true;
 			} else {
-				system.audioPlayer.clearCurrentBuffer();
+				self.fields.audioPlayer.clearCurrentBuffer();
 				self.internals.playPlaylist();
 			}
 		},
@@ -85,7 +93,7 @@ var Playlist = function() {
 				return system.addMessage("That's the end of this playlist");
 
 			self.state.isQueueActive = true;
-			system.audioPlayer.loadBufferFromFile(self.fields.playlist[self.fields.playNextIndex], function() {
+			self.fields.audioPlayer.loadBufferFromFile(self.fields.playlist[self.fields.playNextIndex], function() {
 				self.state.isQueueActive = false;
 				if(self.state.playNextCalled) {
 					self.state.playNextCalled = false;
@@ -96,49 +104,108 @@ var Playlist = function() {
 			});
 		}
 	};
-	
-	this.state = {
-		isQueueActive: false,
-		playNextCalled: false,
-		shuffle: false,
-		repeat: 0				//0: none, 1: all, 2: song
-	};
 };
 
 Playlist.prototype = {
-	add: function(p_file) {
-		if(p_file instanceof File && this.internals.validateFileExtention(p_file.name))
-			this.fields.playlist.push(p_file);
-		else
-			system.addError("The object passed was not a file!");
-	},
-	play: function() {
-		this.internals.playPlaylist();
-	},
-	setRepeat: function(p_repeat) {
-		this.fields.playedList = new Array();
-		
-		switch(p_repeat) {
-		case "none":
-		case "0":
-		case 0:
-			this.state.repeat = 0;
-			break;
-		
-		case "one":
-		case "song":
-		case "2":
-		case 2:
-			this.state.repeat = 2;
-			break;
+		//Playlist file handling
+		add: function(p_file) {
+			if(p_file == null)
+				return addError("Nothing was passed to add");
 			
-		case "all":
-		case "playlist":
-		case "1":
-		case 1:
-		default:
-			this.state.repeat = 1;
-			break;
+			//** File
+			if(p_file instanceof File) {
+				if(this.internals.validateFileExtention(p_file.name))
+					this.fields.playlist.push(p_file);
+				else
+					system.addMessage("Couldn't add " + p_file.name + ". The file type is unsupported.");
+			} 
+			//** FileList
+			else if (p_file instanceof FileList) {
+				for(var i = 0; i < p_file.length; i++)
+					this.add(p_file[i]);
+			} 
+			//** HTMLInputElement
+			else if (p_file instanceof HTMLInputElement) {
+				if(p_file.files != null && p_file.files instanceof FileList)
+					this.add(p_file.files);
+				else
+					system.addError("The element you passed doesn't contain files");
+			}
+			else {
+				system.addError("Couldn't add the file specified. (Type of: " + typeof p_file + ")");
+			}
+				
+		},
+		remove: function(p_file) {
+			if(p_file == null)
+				return addError("Nothing was passed to remove");
+			
+			//** Number - Simply remove the index at that number
+			if(typeof p_file == "number") {
+				if(p_file > 0 && p_file < this.fields.playlist.length)
+					this.fields.playlist.splice(p_file, 1);
+			} 
+			//** String - Remove all instances of the song with this string
+			else if(typeof p_file == "string") {
+				for(var i = this.fields.playlist.length - 1; i >= 0; i--)
+					if(this.fields.playlist[i].name == p_file)
+						this.fields.playlist.splice(i, 1);
+			}
+			//** File - Remove the file
+			else if(p_file instanceof File) {
+				for(var i = this.fields.playlist.length - 1; i >= 0; i--)
+					if(this.fields.playlist[i] == p_file)
+						this.fields.playlist.splice(i, 1);
+			}
+			else {
+				system.addError("Couldn't remove the file specified. (Type of: " + typeof p_file + ")");
+			}
+		},
+		removeAll: function() {
+			this.fields.playlist = new Array();
+		},
+		
+		//Play control
+		play: function(p_player) {
+			if(!(p_player instanceof AudioPlayer))
+				return system.addError("Object passed was not an audio player");
+			
+			this.fields.audioPlayer = p_player;
+			this.internals.playPlaylist();
+		},
+		
+		//State setting
+		setRepeat: function(p_repeat) {
+			this.resetPlayedList();
+			
+			switch(p_repeat) {
+			case "none":
+			case "0":
+			case 0:
+				this.state.repeat = 0;
+				break;
+			
+			case "one":
+			case "song":
+			case "2":
+			case 2:
+				this.state.repeat = 2;
+				break;
+				
+			case "all":
+			case "playlist":
+			case "1":
+			case 1:
+			default:
+				this.state.repeat = 1;
+				break;
+			}
+		},
+		setShuffle: function(p_shuffle) {
+			//This forces shuffle to be boolean
+			this.state.shuffle = (p_shuffle) ? true : false;
+		},
+		resetPlayedList: function() {
+			this.fields.playedList = new Array();
 		}
-	}
 };
