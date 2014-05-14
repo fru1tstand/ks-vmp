@@ -70,34 +70,49 @@ System.prototype = {
 		//*********************************************************************************** Themify
 		loadTheme: function(p_location) {
 			var self = this;
+			//Initially load the theme page
 			this.ajaxLoad(p_location, function(r) {
 				document.body.innerHTML = r.response;
+				//Unfortunately, we need to manually handle all of the script tags that come with it
 				var scriptElems = document.body.getElementsByTagName("script");
 				for(var i = 0; i < scriptElems.length; i++) {
+					//Scripts with no "src" tag have the code between <script> tags, so we can just store these
 					if(scriptElems[i].src == "") {
 						self.fields.themeScriptsExecuteList.push(scriptElems[i].innerHTML);
 					} else {
+						//Here we have to ajax load the scripts with a "src" attribute, before then evaluating the other scripts
 						self.fields.themeScriptsLoading++;
 						self.ajaxLoad(scriptElems[i].src, function(s) {
-							eval(s.response);
 							self.fields.themeScriptsLoading--;
+							var script = document.createElement("script");
+							script.text = s.responseText;
+							document.head.appendChild(script).parentNode.removeChild(script);
+							
+							//This makes sure that the scripts with src tag get evaluated if all other ajax script loads are completed
 							if(self.fields.themeScriptsLoading == 0 && self.fields.themeScriptsExecute) {
 								for(var j = 0; j < self.fields.themeScriptsExecuteList.length; j++) {
-									eval(self.fields.themeScriptsExecuteList[j]);
+									var script = document.createElement("script");
+									script.text = self.fields.themeScriptsExecuteList[j];
+									document.head.appendChild(script).parentNode.removeChild(script);
 									self.fields.themeScriptsExecuteList[j] = null;
 								}
 							}
 						});
 					}
 				}
+				//In the rare occasion othat the ajax script loads complete before the page scripts, or that there are no
+				//ajax scripts in the first place, we can evaluate the page scripts here.
 				if(self.fields.themeScriptsLoading == 0) {
 					for(var j = 0; j < self.fields.themeScriptsExecuteList.length; j++) {
 						if(self.fields.themeScriptsExecuteList[j] != null) {
-							eval(self.fields.themeScriptsExecuteList[j]);
+							var script = document.createElement("script");
+							script.text = self.fields.themeScriptsExecuteList[j];
+							document.head.appendChild(script).parentNode.removeChild(script);
 							self.fields.themeScriptsExecuteList[j] = null;
 						}
 					}
 				}
+				//Or set the flag that the page has finished and we're simply waiting for the ajax to complete the call
 				self.fields.themeScriptsExecute = true;
 			});
 		}
