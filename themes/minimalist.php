@@ -61,14 +61,16 @@
 		padding: 0;
 		border:none;
 		margin:0;
+		border-left: 1px solid #FFF;
+		border-right: 1px solid #FFF;
 	}
 	#timebar_current {
 		height: 6px;
-		border: 1px solid #FFF;
-		border-top: none;
+		border-bottom: 1px solid #FFF;
 		width: 20%;
 		display:inline-block;
 		margin: 0;
+		padding: 0;
 	}
 	
 	#controls {
@@ -128,12 +130,14 @@
 	var fpsCounter = document.getElementById("fps");
 	var timer = document.getElementById("time_string");
 	var cPlayTime = 0;
+	var timebar = document.getElementById("timebar_current");
 	
 	AnimateUpdate.setCallback(function(pDiff) {
 		vis.update(system.audioPlayer.getFrequencyData());
 		fpsCounter.innerHTML = (1 / pDiff * 1000 + " ups");
 		cPlayTime = system.audioPlayer.getPlayTime();
 		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		timebar.style.width = cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100 + "%";
 	});
 	AnimateUpdate.start();
 
@@ -148,4 +152,6 @@
 		if(system.isMethod(p_callback))
 			p_callback();
 	};
+
+	system.addMessage(system.audioPlayer);
 </script>
