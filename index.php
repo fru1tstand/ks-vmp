@@ -6,14 +6,7 @@
 
 		<script src="js/AudioPlayer.js"></script>
 		<script src="js/VMPShared.js"></script>
-		<script>
-			window.onload = function() { system.loadTheme("themes/minimalist.php"); };
-		</script>
 	</head>
 	
-	<body>
-
-	</body>
-	
-	
+	<body></body>
 </html>

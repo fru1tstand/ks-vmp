@@ -12,9 +12,6 @@ var System = function() {
 		return arguments.callee.singletonInstance;
 	arguments.callee._singletonInstance = this;
 	
-	//"Constant" properties
-	this.audioPlayer = new AudioPlayer();
-	
 	this.fields = {
 		messageDebug: true,
 		errorDebug: true,
@@ -28,6 +25,12 @@ var System = function() {
 		message: null,
 		error: null
 	};
+	
+	//We'll need this later!
+	this.audioPlayer = null;
+	
+	//Lets load the first theme, ever
+	this.loadTheme("themes/minimalist.php");
 };
 
 System.prototype = {
@@ -115,8 +118,19 @@ System.prototype = {
 				//Or set the flag that the page has finished and we're simply waiting for the ajax to complete the call
 				self.fields.themeScriptsExecute = true;
 			});
+		},
+		clearTheme: function() {
+			if(this.isMethod(destroy)) {
+				destroy(breakTheme);
+			}
+		},
+		breakTheme: function() {
+			document.body.innerHTML = "";
 		}
 };
 
 //Bind to window
 window.system = new System();
+
+//Create our audio engine
+window.system.audioPlayer = new AudioPlayer();

@@ -73,6 +73,7 @@
 				echo '<div class="spectrum_bar" id="freq_', $i, '"></div>';
 		?>
 	</div>
+	
 	<div class="signature">
 		<div id="time"></div>
 	</div>
@@ -107,7 +108,6 @@
 	var mPlaylist = new Playlist();
 	document.getElementById('input_songs').onchange = function() {
 		localFiles = this.files;
-
 		for(var i = 0; i < localFiles.length; i++)
 		{
 			mPlaylist.add(localFiles.item(i));
