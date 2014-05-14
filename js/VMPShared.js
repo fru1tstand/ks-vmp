@@ -35,7 +35,7 @@ var System = function() {
 
 System.prototype = {
 		isMethod: function(p_var) {
-			return p_var != null && Object.prototype.toString.call(p_var) == "[object Function]";
+			return (typeof(p_var) === "function");
 		},
 		
 		//*********************************************************************************** Message handling
@@ -121,7 +121,10 @@ System.prototype = {
 		},
 		clearTheme: function() {
 			if(this.isMethod(destroy)) {
-				destroy(breakTheme);
+				destroy(this.breakTheme);
+			} else {
+				addError("No clean destroy method was found. This might cause errors!");
+				this.breakTheme();
 			}
 		},
 		breakTheme: function() {
