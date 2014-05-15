@@ -108,6 +108,7 @@ AudioPlayer.prototype = {
 			};
 			this.fields.nextBuffer = null;
 			system.addMessage("Loading audio from file...");
+
 			reader.readAsArrayBuffer(p_file);
 		},
 		
@@ -117,7 +118,7 @@ AudioPlayer.prototype = {
 				return system.addError("Sorry, your browser doesn't support Web Audio API!");
 			
 			if(p_resetPlaytime) 
-				this.resetTime();
+				this.resetStartTime();
 			
 			if(this.state.isPlaying) {
 				try {
@@ -147,7 +148,6 @@ AudioPlayer.prototype = {
 				
 				//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
 //				iv_audioPlaySource.onended = function() {
-//					console.log("always will poop");
 //					if(isMethod(p_completeCallback))
 //						p_completeCallback();
 //				};
@@ -178,6 +178,21 @@ AudioPlayer.prototype = {
 				this.events.checkOnEnded();
 			}
 		},
+		seek: function(p_time) {
+			if(!this.isAudioReady())
+				return;
+			
+			var sTime;
+			if((p_time + '').substring((p_time + '').length - 1) == "%")
+				sTime = p_time.substring(0, p_time.length - 2) * this.getCurrentAudioLength();
+			else
+				sTime = p_time;
+			
+			this.play({
+				startTime: sTime,
+				onComplete: this.events.onEnded
+			});
+		},
 		pause: function() {
 			if(!this.isReady())
 				return system.addError("Sorry, your browser doesn't support Web Audio API");
@@ -200,12 +215,12 @@ AudioPlayer.prototype = {
 			this.fields.currentBuffer = this.fields.nextBuffer;
 			this.state.isCurrentBufferLoaded = true;
 			
-			this.resetTime();
+			this.resetStartTime();
 			this.play(p_options);
 			
 			this.state.isNextBufferLoaded = false;
 		},
-		resetTime: function() {
+		resetStartTime: function() {
 			this.state.playTimeSaved = 0;
 			this.state.playTimeStarted = 0;
 		},
