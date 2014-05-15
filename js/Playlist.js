@@ -4,7 +4,7 @@
  * Kodlee Yin
  * 5-10-14
  */
-var Playlist = function() {
+var Playlist = function(p_audioPlayer) {
 	var self = this;
 	this.fields = {
 		playlist: new Array(),
@@ -116,6 +116,10 @@ var Playlist = function() {
 			});
 		}
 	};
+	
+	//*********************************************************************************** Constructor
+	if(p_audioPlayer != null && p_audioPlayer instanceof AudioPlayer)
+		this.fields.audioPlayer = p_audioPlayer;
 };
 
 Playlist.prototype = {
@@ -178,18 +182,31 @@ Playlist.prototype = {
 		},
 		
 		//Play control
-		play: function(p_player, p_options) {
-			if(!(p_player instanceof AudioPlayer))
-				return system.addError("Object passed was not an audio player");
+		play: function(p_options) {
+			if(!this.isReady())
+				return system.addError("Playlist was not instantiated correctly");
 			
-			if(!p_player.isPlaying() && !p_player.isAudioQueueReady() && this.isComplete())
+			//Basically, start over new
+			if(!this.fields.audioPlayer.isPlaying() && !this.fields.audioPlayer.isAudioQueueReady() && this.isComplete()) {
 				this.resetPlayedList();
+				this.fields.audioPlayer.clearCurrentBuffer();
+				this.fields.audioPlayer.clearNextBuffer();
+				this.fields.audioPlayer.resetStartTime();
+			}
+			
+			if(this.fields.audioPlayer.isPlaying()) 
+				this.fields.audioPlayer.resetStartTime();
 			
 			if(p_options == null)
 				p_options = {};
-			this.fields.audioPlayer = p_player;
 			this.events.onSongComplete = p_options.onComplete;
 			this.internals.playPlaylist(false, p_options);
+		},
+		next: function(p_player) {
+			if(!this.isReady())
+				return system.addError("Playlist was not instantiated correctly");
+			
+			//TODO: Finished Playlist.next()
 		},
 		
 		//State setting
@@ -223,10 +240,15 @@ Playlist.prototype = {
 			//This forces shuffle to be boolean
 			this.state.shuffle = (p_shuffle) ? true : false;
 		},
+		resetPlayedList: function() {
+			this.fields.playedList = new Array();
+		},
+		
+		//Getters
 		isComplete: function() {
 			return this.fields.playedList.length == this.fields.playlist.length;
 		},
-		resetPlayedList: function() {
-			this.fields.playedList = new Array();
+		isReady: function() {
+			return this.fields.audioPlayer != null && this.fields.audioPlayer instanceof AudioPlayer;
 		}
 };
