@@ -85,7 +85,8 @@ System.prototype = {
 					} else {
 						//Here we have to ajax load the scripts with a "src" attribute, before then evaluating the other scripts
 						self.fields.themeScriptsLoading++;
-						self.ajaxLoad(scriptElems[i].src, function(s) {
+																//Prevents caching
+						self.ajaxLoad(scriptElems[i].src + "?t=" + Date.now(), function(s) {
 							self.fields.themeScriptsLoading--;
 							var script = document.createElement("script");
 							script.text = s.responseText;
