@@ -24,7 +24,13 @@
 		text-align: center;
 	}
 	
-	.spectrum_bar {
+	#spectrum_container {
+		display: inline; 
+		padding: 0;
+		margin: 0;
+		border: none none;
+	}
+	#spectrum_container div {
 		display: inline-block;
 		width: .75%;
 		background-color: transparent;
@@ -38,7 +44,7 @@
 	}
 	.spectrum_baseline {
 		display:inline-block;
-		width: 0px;
+		width: 0;
 		margin: 0;
 		padding: 0;
 		vertical-align:bottom;
@@ -57,6 +63,7 @@
 	#timebar {
 		background-color: transparent;
 		text-align: left;
+		cursor: pointer;
 		
 		width: 76.8%;
 		max-width: 1024px;
@@ -67,11 +74,12 @@
 		border-bottom: 1px solid transparent;
 	}
 	#timebar:hover {
-		border-bottom: 1px solid #FFF;
+		border-bottom: 1px solid #222;
 	}
 	#timebar_current {
 		border: 1px solid #FFF;
 		border-bottom:none;
+		border-top:none;
 		width: 20%;
 		margin: 0;
 		padding: 0;
@@ -94,10 +102,7 @@
 <div id="background">
 	<div class="spectrum">
 		<div class="spectrum_baseline"></div>
-		<?php 
-			for($i = 0; $i < 128; $i++)
-				echo '<div class="spectrum_bar" id="freq_', $i, '"></div>';
-		?>
+		<div id="spectrum_container"></div>
 		<div class="spectrum_baseline"></div>
 	</div>
 	<div id="timebar"><div id="timebar_offset"></div><div id="timebar_current"></div></div>
@@ -120,7 +125,9 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
-	var mPlaylist = new Playlist();
+	var mPlaylist = new Playlist(system.audioPlayer);
+
+	var fullFile;
 	document.getElementById('input_songs').onchange = function() {
  		mPlaylist.add(this.files);
 	};
@@ -129,13 +136,15 @@
 		system.audioPlayer.stop(true);
 	};
 	document.getElementById('button_play').onclick = function() {
-		mPlaylist.play(system.audioPlayer);
+		mPlaylist.play();
 	};
 	document.getElementById('button_pause').onclick = function() {
 		system.audioPlayer.pause();
 	};
 
 	var vis = new Spectrum("freq_", 128, "squared");
+	vis.createDOM("spectrum_container").bindToDOM();
+	
 	var AnimateUpdate = new AnimateUpdate();
 	var fpsCounter = document.getElementById("fps");
 	var timer = document.getElementById("time_string");
@@ -153,10 +162,7 @@
 	
 	timebar_scrub.onclick = function(e) {
 		if(system.audioPlayer.isAudioReady()) {
-			system.audioPlayer.stop();
-			mPlaylist.play(system.audioPlayer, {
-				startTime: (e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth * system.audioPlayer.getCurrentAudioLength()
-			});
+			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
 		}
 	};
 	

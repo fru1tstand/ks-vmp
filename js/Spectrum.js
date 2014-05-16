@@ -10,7 +10,8 @@ var Spectrum = function(p_domPrefix, p_barCount, p_function) {
 			//Dom elements
 			domHeightMax: 500,
 			domArray: null,
-			samplePoints: null
+			samplePoints: null,
+			domIdPrefix: ""
 	};
 	
 	this.internal = {
@@ -32,21 +33,34 @@ var Spectrum = function(p_domPrefix, p_barCount, p_function) {
 				self.fields.samplePoints = new Array(p_barCount);
 				for(var i = 0; i < p_barCount; i++)
 					self.fields.samplePoints[i] = Math.round(Math.min(Math.max(i_function(i), self.fields.lowpassCutoff), self.fields.highpassCutoff));
-				
-				system.addMessage(self.fields.samplePoints);
 			}
 	};
 	//*********************************************************************************** Construct
 	this.fields.domArray = new Array(p_barCount);
 	this.internal.setSamplePoints(p_barCount, p_function);
-	for(var i = 0; i < p_barCount; i++)
-		this.fields.domArray[i] = document.getElementById(p_domPrefix + i);
-	
+	this.fields.domIdPrefix = p_domPrefix;
 };
 
 Spectrum.prototype = {
 		update: function(p_freqData) {
 			for(var i = 0; i < this.fields.domArray.length; i++)
 				this.fields.domArray[i].style.height = (p_freqData[this.fields.samplePoints[i]] / 255) * this.fields.domHeightMax + "px";
+		},
+		
+		//HTML binding
+		createDOM: function(p_containerId) {
+			var cont = document.getElementById(p_containerId);
+			for(var i = 0; i < this.fields.domArray.length; i++) {
+				var insert = document.createElement("div");
+				insert.id = this.fields.domIdPrefix + i;
+				cont.appendChild(insert);
+			}
+			return this;
+		},
+		bindToDOM: function() {
+			for(var i = 0; i < this.fields.domArray.length; i++)
+				this.fields.domArray[i] = document.getElementById(this.fields.domIdPrefix + i);
+			
+			return this;
 		}
 };

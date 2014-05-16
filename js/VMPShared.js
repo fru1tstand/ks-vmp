@@ -30,7 +30,7 @@ var System = function() {
 	this.audioPlayer = null;
 	
 	//Lets load the first theme, ever
-	this.loadTheme("themes/minimalist.php");
+	this.loadTheme("themes/minimalist.html");
 };
 
 System.prototype = {
