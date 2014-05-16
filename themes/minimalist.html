@@ -4,6 +4,8 @@
 		margin: 0;
 		height: 100%;
 		color: #FFF;
+	}
+	html, body, button {
 		font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
 	}
 
@@ -92,11 +94,38 @@
 	}
 	
 	#controls {
-		margin-top: 50px;
-		width: 96%;
-		max-width: 1024px;
-		margin: 0px auto;
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 100px;
+/* 		background-color: #FFF; */
+		text-align:center;
 	}
+	#controls button {
+		background-color: transparent;
+		border: 1px solid #151515;
+		border-left:none;
+		border-right: none;
+		height: 80px;
+		width: 160px;
+		color: #151515;
+		font-weight: bold;
+		font-size: 22px;
+		cursor: pointer;
+		outline: 0;
+		outline-style: none;
+		outline-width: 0;
+		margin: 0 10px;
+	}
+	#controls button:hover {
+		border-color: #333;
+		color: #333;
+		outline: 0;
+		outline-style: none;
+		outline-width: 0;
+	}
+
 </style>
 
 <div id="background">
@@ -107,17 +136,16 @@
 	</div>
 	<div id="timebar"><div id="timebar_offset"></div><div id="timebar_current"></div></div>
 	<div class="signature">
-		<div id="time_string"></div>
+		<div id="time_string"></div> <span id="fps" style="color:#FFF"></span>
+				<div>
+			<input type="file" id="input_songs" webkitdirectory multiple>
+		</div>
 	</div>
 	
 	<div id="controls">
 		<button id="button_play" class="music_control">Play</button>
 		<button id="button_stop" class="music_control">Stop</button>
 		<button id="button_pause" class="music_control">Pause</button>
-		<span id="fps" style="color:#FFF"></span>
-		<div>
-			<input type="file" id="input_songs" webkitdirectory multiple>
-		</div>
 	</div>
 </div>
 
@@ -125,6 +153,34 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
+	//Setup spectrum
+	var vis = new Spectrum("freq_", 128, "squared");
+	var animateUpdate = new AnimateUpdate();
+
+	//Grab some DOM elements
+	var fpsCounter = document.getElementById("fps");
+	var timer = document.getElementById("time_string");
+	var timebar = document.getElementById("timebar_current");
+	var timebar_scrub = document.getElementById("timebar");
+	
+	var cPlayTime = 0;
+
+	//Setup callbacks and pages
+	vis.createDOM("spectrum_container").bindToDOM();
+	animateUpdate.setCallback(function(pDiff) {
+		vis.update(system.audioPlayer.getFrequencyData());
+		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
+		cPlayTime = system.audioPlayer.getPlayTime();
+		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		timebar.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+	});
+	timebar_scrub.onclick = function(e) {
+		if(system.audioPlayer.isAudioReady()) {
+			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
+		}
+	};
+
+	//Setup event handlers
 	document.getElementById('input_songs').onchange = function() {
  		system.playlist.add(this.files);
 	};
@@ -139,30 +195,7 @@
 		system.audioPlayer.pause();
 	};
 
-	var vis = new Spectrum("freq_", 128, "squared");
-	vis.createDOM("spectrum_container").bindToDOM();
-	
-	var animateUpdate = new AnimateUpdate();
-	var fpsCounter = document.getElementById("fps");
-	var timer = document.getElementById("time_string");
-	var cPlayTime = 0;
-	var timebar = document.getElementById("timebar_current");
-	var timebar_scrub = document.getElementById("timebar");
-	
-	animateUpdate.setCallback(function(pDiff) {
-		vis.update(system.audioPlayer.getFrequencyData());
-		fpsCounter.innerHTML = (1 / pDiff * 1000 + " ups");
-		cPlayTime = system.audioPlayer.getPlayTime();
-		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-		timebar.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
-	});
-	
-	timebar_scrub.onclick = function(e) {
-		if(system.audioPlayer.isAudioReady()) {
-			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
-		}
-	};
-	
+	//Start the animation
 	animateUpdate.start();
 
 	function destroy(p_callback) {
