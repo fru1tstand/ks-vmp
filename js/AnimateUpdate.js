@@ -11,7 +11,14 @@ var AnimateUpdate = function() {
 	this.fields = {
 		drawStart: 0,
 		drawDiff: 0,
-		startTime: 0
+		startTime: 0,
+		
+		updateDeltaSize: 20,
+		updateDeltaArray: null,
+		updateDeltaPointer: 0,
+		skipCalcFrames: 10,		//How many frames do you want to buffer before calculating the FPS again
+		skipCalcFramesCount: 0,
+		fps: 1
 	};
 	
 	this.events = {
@@ -26,6 +33,21 @@ var AnimateUpdate = function() {
 			if(system.isMethod(self.events.animate))
 				self.events.animate(self.fields.drawDiff);
 			
+			if(self.state.trackUpdateDelta) {
+				self.fields.skipCalcFramesCount++;
+				self.fields.updateDeltaArray[self.fields.updateDeltaPointer] = self.fields.drawDiff;
+				self.fields.updateDeltaPointer = ++self.fields.updateDeltaPointer % self.fields.updateDeltaSize;
+				
+				if(self.fields.skipCalcFramesCount >= self.fields.skipCalcFrames) {
+					self.fields.skipCalcFramesCount = 0;
+					self.fields.fps = 0;
+					for(var i = 0; i < self.fields.updateDeltaArray.length; i++)
+						self.fields.fps += self.fields.updateDeltaArray[i];
+					self.fields.fps /= self.fields.updateDeltaArray.length;
+					self.fields.fps = 1 / self.fields.fps * 1000;
+				}
+			}
+			
 			self.fields.startTime = self.fields.drawStart;
 			if(self.state.isUpdating)
 				window.requestAnimationFrame(self.internal.animate);
@@ -33,14 +55,17 @@ var AnimateUpdate = function() {
 	};
 	
 	this.state = {
-		isUpdating: false
+		isUpdating: false,
+		trackUpdateDelta: true
 	};
 	
 	//*********************************************************************************** Construct
 	window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 	if(!system.isMethod(window.requestAnimationFrame))
 		return system.addError("Your browser doesn't support calling animation frames");
-
+	
+	//FPS track
+	this.fields.updateDeltaArray = new Array(this.fields.updateDeltaSize);
 };
 
 AnimateUpdate.prototype = {
@@ -57,5 +82,10 @@ AnimateUpdate.prototype = {
 		},
 		setCallback: function(p_callback) {
 			this.events.animate = p_callback;
+		},
+		
+		//*********************************************************************************** Controls
+		getFPS: function() {
+			return this.fields.fps;
 		}
 };
