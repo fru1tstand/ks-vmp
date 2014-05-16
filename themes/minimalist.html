@@ -125,18 +125,15 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
-	var mPlaylist = new Playlist(system.audioPlayer);
-
-	var fullFile;
 	document.getElementById('input_songs').onchange = function() {
- 		mPlaylist.add(this.files);
+ 		system.playlist.add(this.files);
 	};
 	
 	document.getElementById('button_stop').onclick = function() {
 		system.audioPlayer.stop(true);
 	};
 	document.getElementById('button_play').onclick = function() {
-		mPlaylist.play();
+		system.playlist.play();
 	};
 	document.getElementById('button_pause').onclick = function() {
 		system.audioPlayer.pause();
@@ -145,14 +142,14 @@
 	var vis = new Spectrum("freq_", 128, "squared");
 	vis.createDOM("spectrum_container").bindToDOM();
 	
-	var AnimateUpdate = new AnimateUpdate();
+	var animateUpdate = new AnimateUpdate();
 	var fpsCounter = document.getElementById("fps");
 	var timer = document.getElementById("time_string");
 	var cPlayTime = 0;
 	var timebar = document.getElementById("timebar_current");
 	var timebar_scrub = document.getElementById("timebar");
 	
-	AnimateUpdate.setCallback(function(pDiff) {
+	animateUpdate.setCallback(function(pDiff) {
 		vis.update(system.audioPlayer.getFrequencyData());
 		fpsCounter.innerHTML = (1 / pDiff * 1000 + " ups");
 		cPlayTime = system.audioPlayer.getPlayTime();
@@ -166,15 +163,16 @@
 		}
 	};
 	
-	AnimateUpdate.start();
+	animateUpdate.start();
 
 	function destroy(p_callback) {
-		AnimateUpdate.stop();
-		delete mPlaylist;
-		delete vis;
-		delete AnimateUpdate;
-		delete fpsCounter;
-		delete timer;
+		animateUpdate.stop();
+		animateUpdate.setCallback(null);
+		vis = null;
+		animateUpdate = null
+		fpsCounter = null;
+		timebar = null;
+		timebar_scrub = null;
 		
 		if(system.isMethod(p_callback))
 			p_callback();

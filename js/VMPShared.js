@@ -28,6 +28,7 @@ var System = function() {
 	
 	//We'll need this later!
 	this.audioPlayer = null;
+	this.playlist = null;
 	
 	//Lets load the first theme, ever
 	this.loadTheme("themes/minimalist.html");
@@ -127,6 +128,7 @@ System.prototype = {
 				addError("No clean destroy method was found. This might cause errors!");
 				this.breakTheme();
 			}
+			return this;
 		},
 		breakTheme: function() {
 			document.body.innerHTML = "";
@@ -137,4 +139,5 @@ System.prototype = {
 window.system = new System();
 
 //Create our audio engine
-window.system.audioPlayer = new AudioPlayer();
+system.audioPlayer = new AudioPlayer();
+system.playlist = new Playlist(system.audioPlayer);
