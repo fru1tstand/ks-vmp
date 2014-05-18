@@ -3,10 +3,18 @@
 		padding: 0;
 		margin: 0;
 		height: 100%;
+		
+		background-color: #000;
 		color: #FFF;
 	}
 	html, body, button {
 		font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+	}
+	
+	.container {
+		margin: 0px auto;
+		width: 100%;
+		max-width: 1024px;
 	}
 
 	#background {
@@ -15,76 +23,57 @@
 		right:0;
 		bottom:0;
 		left:0;
-		background-color: #000;
 	}
 	
 	.spectrum {
 		height: 500px;
-		width:100%;
 		margin: 30px 0 0 0;
-		padding: 0;
 		text-align: center;
 	}
 	
 	#spectrum_container {
-		display: inline; 
-		padding: 0;
-		margin: 0;
-		border: none none;
+		display: inline;
 	}
 	#spectrum_container div {
 		display: inline-block;
 		width: .75%;
 		background-color: transparent;
-		height:0px;
+		height: 0px;
 		vertical-align:bottom;
 		border-top: 1px solid #FFF;
 		border-bottom: 1px solid #FFF;
-		margin:0;
-		padding: 0;
 		max-width: 8px;
 	}
 	.spectrum_baseline {
 		display:inline-block;
 		width: 0;
-		margin: 0;
-		padding: 0;
 		vertical-align:bottom;
 		height: 100%;
 	}
 	
-	.signature {
-		max-width: 1024px;
-		width: 96%;
-		margin:0px auto 15px;
+	#time_signature div {
+		width:50%;
+		display: inline-block;
 	}
-	#time_string {
-		color:#FFF;
+	#time_total {
+		text-align:right;
 	}
-	
 	#timebar {
 		background-color: transparent;
 		text-align: left;
 		cursor: pointer;
-		
 		width: 76.8%;
-		max-width: 1024px;
-		margin: 0 auto;
-		
 		height:20px;
-		border:none;
 		border-bottom: 1px solid transparent;
 	}
 	#timebar:hover {
 		border-bottom: 1px solid #222;
 	}
-	#timebar_current {
+	#timebar_pos {
 		border: 1px solid #FFF;
 		border-bottom:none;
 		border-top:none;
 		width: 20%;
-		margin: 0;
-		padding: 0;
 		height:5px;
 	}
 	#timebar_offset {
@@ -99,7 +88,6 @@
 		right: 0;
 		bottom: 0;
 		height: 100px;
-/* 		background-color: #FFF; */
 		text-align:center;
 	}
 	#controls button {
@@ -121,9 +109,6 @@
 	#controls button:hover {
 		border-color: #333;
 		color: #333;
-		outline: 0;
-		outline-style: none;
-		outline-width: 0;
 	}
 
 </style>
@@ -134,10 +119,13 @@
 		<div id="spectrum_container"></div>
 		<div class="spectrum_baseline"></div>
 	</div>
-	<div id="timebar"><div id="timebar_offset"></div><div id="timebar_current"></div></div>
-	<div class="signature">
-		<div id="time_string"></div> <span id="fps" style="color:#FFF"></span>
-				<div>
+	<div id="timebar" class="container"><div id="timebar_offset"></div><div id="timebar_pos"></div></div>
+	<div class="container" id="time_signature">
+		<div id="time_current"></div><div id="time_total"></div>
+	</div>
+	<div class="container">
+	<span id="fps" style="color:#FFF"></span>
+		<div>
 			<input type="file" id="input_songs" webkitdirectory multiple>
 		</div>
 	</div>
@@ -159,9 +147,10 @@
 
 	//Grab some DOM elements
 	var fpsCounter = document.getElementById("fps");
-	var timer = document.getElementById("time_string");
-	var timebar = document.getElementById("timebar_current");
-	var timebar_scrub = document.getElementById("timebar");
+	var currentTime = document.getElementById("time_current");
+	var songTime = document.getElementById("time_total");
+	var timePosition = document.getElementById("timebar_pos");
+	var timebar = document.getElementById("timebar");
 	
 	var cPlayTime = 0;
 
@@ -171,10 +160,12 @@
 		vis.update(system.audioPlayer.getFrequencyData());
 		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
 		cPlayTime = system.audioPlayer.getPlayTime();
-		timer.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-		timebar.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		cPlayTime = system.audioPlayer.getCurrentAudioLength();
+		songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
 	});
-	timebar_scrub.onclick = function(e) {
+	timebar.onclick = function(e) {
 		if(system.audioPlayer.isAudioReady()) {
 			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
 		}
