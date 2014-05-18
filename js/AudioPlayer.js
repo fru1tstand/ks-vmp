@@ -254,6 +254,8 @@ AudioPlayer.prototype = {
 		getCurrentAudioLength: function() {
 			if(this.fields.currentBuffer != null)
 				return this.fields.currentBuffer.duration;
+			else
+				return 0;
 		},
 		isAudioReady: function() {
 			return this.state.isCurrentBufferLoaded;
