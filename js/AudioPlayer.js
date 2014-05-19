@@ -1,8 +1,8 @@
 /**
- * Visual Music Project: Audio Player 3.0
+ * Visual Music Project: Audio Player 3.04
  * 
  * Kodlee Yin
- * 5-9-14
+ * https://github.com/fru1tstand/ks-vmp
  */
 var AudioPlayer = function() {
 	var self = this;

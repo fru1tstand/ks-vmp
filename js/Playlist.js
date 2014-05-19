@@ -1,8 +1,8 @@
 /**
- * Visual Music Project: Playlist 1.0
+ * Visual Music Project: Playlist 3.01
  * 
  * Kodlee Yin
- * 5-10-14
+ * https://github.com/fru1tstand/ks-vmp
  */
 var Playlist = function(p_audioPlayer) {
 	var self = this;
@@ -202,11 +202,11 @@ Playlist.prototype = {
 			this.events.onSongComplete = p_options.onComplete;
 			this.internals.playPlaylist(false, p_options);
 		},
-		next: function(p_player) {
+		next: function(p_options) {
 			if(!this.isReady())
 				return system.addError("Playlist was not instantiated correctly");
 			
-			//TODO: Finished Playlist.next()
+			this.internals.playNextPlaylist(false, p_options);
 		},
 		
 		//State setting
@@ -250,5 +250,8 @@ Playlist.prototype = {
 		},
 		isReady: function() {
 			return this.fields.audioPlayer != null && this.fields.audioPlayer instanceof AudioPlayer;
+		},
+		hasAudio: function() {
+			return this.fields.playlist.length > 0;
 		}
 };
