@@ -187,7 +187,7 @@ Playlist.prototype = {
 				return system.addError("Playlist was not instantiated correctly");
 			
 			//Basically, start over new
-			if(!this.fields.audioPlayer.isPlaying() && !this.fields.audioPlayer.isAudioQueueReady() && this.isComplete()) {
+			if(!this.fields.audioPlayer.isPlaying() && !this.fields.audioPlayer.isAudioQueueReady() && this.isComplete() && !this.fields.audioPlayer.isPaused()) {
 				this.resetPlayedList();
 				this.fields.audioPlayer.clearCurrentBuffer();
 				this.fields.audioPlayer.clearNextBuffer();

@@ -43,7 +43,8 @@ var AudioPlayer = function() {
 			
 			playTimeStarted: 0,
 			playTimeSaved: 0,
-			isPlaying: false
+			isPlaying: false,
+			isPaused: false
 	};
 	
 	//*********************************************************************************** Construct
@@ -143,6 +144,8 @@ AudioPlayer.prototype = {
 			if(this.state.isPlaying)
 				this.stop(true);
 			
+			this.state.isPaused = false;
+			
 			if(!this.state.isPlaying) {
 				this.fields.playSource = this.fields.ctx.createBufferSource();
 				
@@ -202,6 +205,7 @@ AudioPlayer.prototype = {
 			
 			this.state.playTimeSaved += (this.fields.ctx.currentTime - this.state.playTimeStarted);
 			this.stop(false);
+			this.state.isPaused = true;
 			
 			system.addMessage("Paused at " + Math.floor(this.state.playTimeSaved / 60) + ":" + ((this.state.playTimeSaved % 60 < 10) ? "0" : "") +  (this.state.playTimeSaved % 60));
 		},
@@ -265,5 +269,8 @@ AudioPlayer.prototype = {
 		},
 		isPlaying: function() {
 			return this.state.isPlaying;
+		},
+		isPaused: function() {
+			return this.state.isPaused;
 		}
 };
