@@ -1,3 +1,4 @@
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 <style type="text/css">
 	html, body {
 		padding: 0;
@@ -69,9 +70,6 @@
 		margin: -20px 10px 0 0;
 	}
 	
-	#controls {
-		text-align:center;
-	}
 	#controls button {
 		background-color: transparent;
 		border: 1px solid #151515;
@@ -92,7 +90,64 @@
 		border-color: #333;
 		color: #333;
 	}
-
+	#controls_container {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 40px;
+		animation: slidedown 0.3s ease-in-out forwards;
+		-webkit-animation: slidedown 0.3s ease-in-out forwards;
+	}
+	#controls {
+		text-align:center;
+	}
+	#control_toggle {
+		text-align: center;
+		height: 30px;
+		color: #151515;
+		font-size: 28px;
+		margin-bottom: 15px;
+	}
+	#controls_container:hover {
+		animation: slideup 0.3s ease-in-out forwards;
+		-webkit-animation: slideup 0.3s ease-in-out forwards;
+		color: #333;
+	}
+	
+	/*CSS animations*/
+	@keyframes slideup {
+		from {
+			height: 40px;
+		}
+		to {
+			height: 160px;
+		}
+	}
+	@-webkit-keyframes slideup {
+		from {
+			height: 40px;
+		}
+		to {
+			height: 160px;
+		}
+	}
+	@keyframes slidedown {
+		from {
+			height: 160px;
+		}
+		to {
+			height: 40px;
+		}
+	}
+	@-webkit-keyframes slidedown {
+		from {
+			height: 160px;
+		}
+		to {
+			height: 40px;
+		}
+	}
 </style>
 
 <div id="spectrum_push"></div>
@@ -113,10 +168,12 @@
 	</div>
 </div>
 
-<div id="controls" class="container">
-	<button id="button_play" class="music_control">Play</button>
-	<button id="button_stop" class="music_control">Stop</button>
-	<button id="button_pause" class="music_control">Pause</button>
+<div id="controls_container" class="container">
+	<div id="control_toggle"><i class='fa fa-caret-up'></i></div>
+	<div id="controls">
+		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
+		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
+	</div>
 </div>
 
 
@@ -163,19 +220,28 @@
 		}
 	};
 
-	//Setup event handlers
+	//Set up event handlers
 	document.getElementById('input_songs').onchange = function() {
  		system.playlist.add(this.files);
 	};
-	
+
+	//Make buttons do things
 	document.getElementById('button_stop').onclick = function() {
+		if(system.audioPlayer.isPlaying())
+			document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
+		
 		system.audioPlayer.stop(true);
 	};
 	document.getElementById('button_play').onclick = function() {
-		system.playlist.play();
-	};
-	document.getElementById('button_pause').onclick = function() {
-		system.audioPlayer.pause();
+		if(system.audioPlayer.isPlaying()) {
+			system.audioPlayer.pause();
+			this.innerHTML = "<i class='fa fa-play'></i>";
+		} else {
+			if(system.playlist.hasAudio())
+				this.innerHTML = "<i class='fa fa-pause'></i>";
+			system.playlist.play();
+		}
+		
 	};
 
 	//Start the animation
