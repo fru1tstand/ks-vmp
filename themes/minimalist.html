@@ -153,11 +153,20 @@
 	//Setup callbacks and pages
 	vis.createDOM("spectrum_container").bindToDOM();
 	animateUpdate.setCallback(function(pDiff) {
+		//Update spectrum
 		vis.update(system.audioPlayer.getFrequencyData());
+		
+		//Display FPS
 		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
+		
+		//Display play time
 		cPlayTime = system.audioPlayer.getPlayTime();
 		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		
+		//Calculate time bar
 		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		
+		//Display song time
 		cPlayTime = system.audioPlayer.getCurrentAudioLength();
 		songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
 	});
