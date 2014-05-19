@@ -45,42 +45,29 @@
 	
 	#timebar {
 		background-color: transparent;
-		text-align: left;
 		cursor: pointer;
-		color: #333;
-		
 	}
 	#timebar:hover {
-		background-color: #111;
+		background-color: #191919;
 	}
 	#timebar_pos {
 		height: 20px;
-		background-color: #090909;
+		background-color: #111;
 		width: 0;
-		overflow: visible;
 	}
-	#timebar_pos div {
+	#time_total, #time_current {
+		overflow: visible;
 		display: inline-block;
 	}
- 	
- 	#time_total {
- 		padding: 0 10px;
- 		border-right: 1px solid #0F0F0F;
- 	}
- 	#time_current {
- 		padding: 0 10px 0 60px;
- 	}
- 	
- 	#time_left {
- 		overflow: visible; 
-  		width: 0;
- 	}
- 	#time_middle {
- 		text-align:right;
- 		width: 100%;
- 		overflow: visible;
- 	}
-  		
+	#time_total {
+		float: left;
+		margin: 0 0 0 10px;
+	}
+	#time_current {
+		float: right;
+		text-align: right;
+		margin: -20px 10px 0 0;
+	}
 	
 	#controls {
 		text-align:center;
@@ -116,7 +103,7 @@
 </div>
 
 <div id="timebar" class="container">
-	<div id="timebar_pos"><div id="time_left"><div id="time_total"></div></div><div id="time_middle"><div id="time_current"></div></div></div>
+	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
 </div>
 
 <div class="container">
