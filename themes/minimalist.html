@@ -16,17 +16,10 @@
 		max-width: 1024px;
 	}
 	
-	#spectrum_push {
-		height:50px;
-	}
-	#spectrum {
-		height: 500px;
-		text-align: center;
-	}
-	
-	#spectrum_container {
-		display: inline;
-	}
+	#spectrum_push { height:50px; }
+	#spectrum { height: 500px; text-align: center; }
+	#spectrum_container { display: inline; }
+	.spectrum_baseline { display:inline-block; width: 0; vertical-align:bottom; height: 100%; }
 	#spectrum_container div {
 		display: inline-block;
 		width: .75%;
@@ -37,38 +30,13 @@
 		border-bottom: 1px solid #FFF;
 		max-width: 8px;
 	}
-	.spectrum_baseline {
-		display:inline-block;
-		width: 0;
-		vertical-align:bottom;
-		height: 100%;
-	}
 	
-	#timebar {
-		background-color: transparent;
-		cursor: pointer;
-	}
-	#timebar:hover {
-		background-color: #191919;
-	}
-	#timebar_pos {
-		height: 20px;
-		background-color: #111;
-		width: 0;
-	}
-	#time_total, #time_current {
-		overflow: visible;
-		display: inline-block;
-	}
-	#time_total {
-		float: left;
-		margin: 0 0 0 10px;
-	}
-	#time_current {
-		float: right;
-		text-align: right;
-		margin: -20px 10px 0 0;
-	}
+	#timebar 		{ background-color: transparent; cursor: pointer; }
+	#timebar:hover 	{ background-color: #191919; }
+	#timebar_pos 	{ height: 20px; background-color: #111; width: 0; }
+	#time_total, #time_current { overflow: visible; display: inline-block; }
+	#time_total 	{ float: left; margin: 0 0 0 10px; }
+	#time_current 	{ float: right; text-align: right; margin: -20px 10px 0 0; }
 	
 	#controls button {
 		background-color: transparent;
@@ -86,68 +54,66 @@
 		outline-width: 0;
 		margin: 0 10px;
 	}
-	#controls button:hover {
-		border-color: #333;
-		color: #333;
-	}
+	#controls button:hover { border-color: #333; color: #333; }
 	#controls_container {
 		position: fixed;
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 40px;
-		animation: slidedown 0.3s ease-in-out forwards;
-		-webkit-animation: slidedown 0.3s ease-in-out forwards;
-	}
-	#controls {
-		text-align:center;
-	}
-	#control_toggle {
-		text-align: center;
 		height: 30px;
-		color: #151515;
-		font-size: 28px;
-		margin-bottom: 15px;
+		animation: controls_slidedown 0.3s ease-in-out none;
+		-webkit-animation: controls_slidedown 0.3s ease-in-out forwards;
 	}
+	#controls { text-align:center; margin-top: 40px; height: 100%; }
 	#controls_container:hover {
-		animation: slideup 0.3s ease-in-out forwards;
-		-webkit-animation: slideup 0.3s ease-in-out forwards;
+		animation: controls_slideup 0.3s ease-in-out none;
+		-webkit-animation: controls_slideup 0.3s ease-in-out forwards;
 		color: #333;
 	}
 	
+	#controls_playlist_container {
+		background-color: #000;
+		width: 30px;
+		position: fixed;
+		bottom: 0;
+		top: 0;
+		right: 0;
+		animation: playlist_slideright 0.3s ease-in-out none;
+		-webkit-animation: playlist_slideright 0.3s ease-in-out forwards;
+	}
+	#controls_playlist_container:hover {
+		border-left: 1px solid #333;
+		animation: playlist_slideleft 0.3s ease-in-out none;
+		-webkit-animation: playlist_slideleft 0.3s ease-in-out forwards;
+	}
+	#controls_playlist_container:hover #controls_playlist {
+		margin-left: 0;
+	}
+	#controls_playlist {
+		width: 500px;
+		padding: 5px;
+		height: 100%;
+		margin-left: 30px;
+	}
+	.controls_playlist {
+		border: 1px solid #333;
+		border-radius: 10px;
+		padding: 10px;
+	}
+	
 	/*CSS animations*/
-	@keyframes slideup {
-		from {
-			height: 40px;
-		}
-		to {
-			height: 160px;
-		}
-	}
-	@-webkit-keyframes slideup {
-		from {
-			height: 40px;
-		}
-		to {
-			height: 160px;
-		}
-	}
-	@keyframes slidedown {
-		from {
-			height: 160px;
-		}
-		to {
-			height: 40px;
-		}
-	}
-	@-webkit-keyframes slidedown {
-		from {
-			height: 160px;
-		}
-		to {
-			height: 40px;
-		}
-	}
+		/* #controls_playlist */
+	@keyframes playlist_slideleft {from { width: 30px; } to { width: 500px }}
+	@-webkit-keyframes playlist_slideleft {from { width: 30px; } to { width: 500px }}
+	@keyframes playlist_slideright {from { width: 500px; } to { width: 30px }}
+	@-webkit-keyframes playlist_slideright {from { width: 500px; } to { width: 30px }}
+	
+	
+		/* #controls */
+	@keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
+	@-webkit-keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
+	@keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
+	@-webkit-keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
 </style>
 
 <div id="spectrum_push"></div>
@@ -168,11 +134,16 @@
 	</div>
 </div>
 
-<div id="controls_container" class="container">
-	<div id="control_toggle"><i class='fa fa-caret-up'></i></div>
+<div id="controls_container">
 	<div id="controls">
 		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
 		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
+	</div>
+</div>
+
+<div id="controls_playlist_container">
+	<div id="controls_playlist">
+		<div class="controls_playlist">a</div>
 	</div>
 </div>
 
