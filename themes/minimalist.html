@@ -73,40 +73,43 @@
 	
 	#controls_playlist_container {
 		background-color: #000;
-		width: 30px;
+		width: 0px;
 		position: fixed;
 		bottom: 0;
 		top: 0;
 		right: 0;
-		animation: playlist_slideright 0.3s ease-in-out none;
-		-webkit-animation: playlist_slideright 0.3s ease-in-out forwards;
 	}
-	#controls_playlist_container:hover {
-		border-left: 1px solid #333;
-		animation: playlist_slideleft 0.3s ease-in-out none;
-		-webkit-animation: playlist_slideleft 0.3s ease-in-out forwards;
-	}
-	#controls_playlist_container:hover #controls_playlist {
-		margin-left: 0;
-	}
+
 	#controls_playlist {
 		width: 500px;
-		padding: 5px;
 		height: 100%;
-		margin-left: 30px;
 	}
 	.controls_playlist {
 		border: 1px solid #333;
-		border-radius: 10px;
-		padding: 10px;
+		border-left: none;
+		border-right: none;
+		padding: 5px;
+		height: 400px;
+		overflow: auto;
+		height: 50%;
+	}
+	
+	.animate_controls_playlist_slideleft {
+		animation: playlist_slideleft 0.3s ease-in-out none;
+		-webkit-animation: playlist_slideleft 0.3s ease-in-out forwards;
+		border-left: 1px solid #333;
+	}
+	.animate_controls_playlist_slideright {
+		animation: playlist_slideright 0.3s ease-in-out none;
+		-webkit-animation: playlist_slideright 0.3s ease-in-out forwards;
 	}
 	
 	/*CSS animations*/
 		/* #controls_playlist */
-	@keyframes playlist_slideleft {from { width: 30px; } to { width: 500px }}
-	@-webkit-keyframes playlist_slideleft {from { width: 30px; } to { width: 500px }}
-	@keyframes playlist_slideright {from { width: 500px; } to { width: 30px }}
-	@-webkit-keyframes playlist_slideright {from { width: 500px; } to { width: 30px }}
+	@keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
+	@-webkit-keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
+	@keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
+	@-webkit-keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
 	
 	
 		/* #controls */
@@ -138,12 +141,13 @@
 	<div id="controls">
 		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
 		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
+		<button id="button_playlist" class="music_control"><i class="fa fa-list"></i></button>
 	</div>
 </div>
 
 <div id="controls_playlist_container">
 	<div id="controls_playlist">
-		<div class="controls_playlist">a</div>
+		<div class="controls_playlist" id="playlist_player">a</div>
 	</div>
 </div>
 
@@ -152,82 +156,98 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
-	//Setup spectrum
-	var vis = new Spectrum("freq_", 128, "squared");
-	var animateUpdate = new AnimateUpdate();
+	(function(window, document, undefined) {
+		//Setup spectrum
+		var vis = new Spectrum("freq_", 128, "squared");
+		var animateUpdate = new AnimateUpdate();
 
-	//Grab some DOM elements
-	var fpsCounter = document.getElementById("fps");
-	var currentTime = document.getElementById("time_current");
-	var songTime = document.getElementById("time_total");
-	var timePosition = document.getElementById("timebar_pos");
-	var timebar = document.getElementById("timebar");
-	
-	var cPlayTime = 0;
+		//Grab some DOM elements
+		var fpsCounter = document.getElementById("fps");
+		var currentTime = document.getElementById("time_current");
+		var songTime = document.getElementById("time_total");
+		var timePosition = document.getElementById("timebar_pos");
+		var timebar = document.getElementById("timebar");
 
-	//Setup callbacks and pages
-	vis.createDOM("spectrum_container").bindToDOM();
-	animateUpdate.setCallback(function(pDiff) {
-		//Update spectrum
-		vis.update(system.audioPlayer.getFrequencyData());
-		
-		//Display FPS
-		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
-		
-		//Display play time
-		cPlayTime = system.audioPlayer.getPlayTime();
-		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-		
-		//Calculate time bar
-		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
-		
-		//Display song time
-		cPlayTime = system.audioPlayer.getCurrentAudioLength();
-		songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-	});
-	timebar.onclick = function(e) {
-		if(system.audioPlayer.isAudioReady()) {
-			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
-		}
-	};
+		//Some fields used
+		var cPlayTime = 0,
+			playlistVisible = false;
 
-	//Set up event handlers
-	document.getElementById('input_songs').onchange = function() {
- 		system.playlist.add(this.files);
-	};
+		//Setup callbacks and pages
+		vis.createDOM("spectrum_container").bindToDOM();
+		animateUpdate.setCallback(function(pDiff) {
+			//Update spectrum
+			vis.update(system.audioPlayer.getFrequencyData());
+			
+			//Display FPS
+			fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
+			
+			//Display play time
+			cPlayTime = system.audioPlayer.getPlayTime();
+			currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+			
+			//Calculate time bar
+			timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+			
+			//Display song time
+			cPlayTime = system.audioPlayer.getCurrentAudioLength();
+			songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		});
+		timebar.onclick = function(e) {
+			if(system.audioPlayer.isAudioReady()) {
+				system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
+			}
+		};
+		system.playlist.events.onChange = function() {
+			var playlist = document.getElementById("playlist_player");
+			playlist.innerHTML = "";
+			for(var i = 0; i < system.playlist.fields.playlist.length; i++) {
+				playlist.innerHTML += system.playlist.fields.playlist[i].name + "<br />";
+			}
+		};
 
-	//Make buttons do things
-	document.getElementById('button_stop').onclick = function() {
-		if(system.audioPlayer.isPlaying())
-			document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
-		
-		system.audioPlayer.stop(true);
-	};
-	document.getElementById('button_play').onclick = function() {
-		if(system.audioPlayer.isPlaying()) {
-			system.audioPlayer.pause();
-			this.innerHTML = "<i class='fa fa-play'></i>";
-		} else {
-			if(system.playlist.hasAudio())
-				this.innerHTML = "<i class='fa fa-pause'></i>";
-			system.playlist.play();
-		}
-		
-	};
+		//Set up event handlers
+		document.getElementById('input_songs').onchange = function() {
+	 		system.playlist.add(this.files);
+		};
 
-	//Start the animation
-	animateUpdate.start();
+		//Make buttons do things
+		document.getElementById('button_stop').onclick = function() {
+			if(system.audioPlayer.isPlaying())
+				document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
+			
+			system.audioPlayer.stop(true);
+		};
+		document.getElementById('button_play').onclick = function() {
+			if(system.audioPlayer.isPlaying()) {
+				system.audioPlayer.pause();
+				this.innerHTML = "<i class='fa fa-play'></i>";
+			} else {
+				if(system.playlist.hasAudio())
+					this.innerHTML = "<i class='fa fa-pause'></i>";
+				system.playlist.play();
+			}
+			
+		};
+		document.getElementById('button_playlist').onclick = function() {
+			playlistVisible = !playlistVisible;
+			var playlistDom = document.getElementById("controls_playlist_container");
+			playlistDom.className = ((playlistVisible) ? "animate_controls_playlist_slideleft" : "animate_controls_playlist_slideright");
+		};
 
-	function destroy(p_callback) {
-		animateUpdate.stop();
-		animateUpdate.setCallback(null);
-		vis = null;
-		animateUpdate = null
-		fpsCounter = null;
-		timebar = null;
-		timebar_scrub = null;
-		
-		if(system.isMethod(p_callback))
-			p_callback();
-	};
+		//Start the animation
+		animateUpdate.start();
+
+		function destroy(p_callback) {
+			animateUpdate.stop();
+			animateUpdate.setCallback(null);
+			vis = null;
+			animateUpdate = null
+			fpsCounter = null;
+			timebar = null;
+			timebar_scrub = null;
+			
+			if(system.isMethod(p_callback))
+				p_callback();
+		};
+	})(this, document);
 </script>
