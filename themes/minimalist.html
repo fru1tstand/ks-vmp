@@ -61,12 +61,12 @@
 		left: 0;
 		right: 0;
 		height: 30px;
-		animation: controls_slidedown 0.3s ease-in-out none;
+		animation: controls_slidedown 0.3s ease-in-out forwards;
 		-webkit-animation: controls_slidedown 0.3s ease-in-out forwards;
 	}
 	#controls { text-align:center; margin-top: 40px; height: 100%; }
 	#controls_container:hover {
-		animation: controls_slideup 0.3s ease-in-out none;
+		animation: controls_slideup 0.3s ease-in-out forwards;
 		-webkit-animation: controls_slideup 0.3s ease-in-out forwards;
 		color: #333;
 	}
@@ -95,12 +95,12 @@
 	}
 	
 	.animate_controls_playlist_slideleft {
-		animation: playlist_slideleft 0.3s ease-in-out none;
+		animation: playlist_slideleft 0.3s ease-in-out forwards;
 		-webkit-animation: playlist_slideleft 0.3s ease-in-out forwards;
 		border-left: 1px solid #333;
 	}
 	.animate_controls_playlist_slideright {
-		animation: playlist_slideright 0.3s ease-in-out none;
+		animation: playlist_slideright 0.3s ease-in-out forwards;
 		-webkit-animation: playlist_slideright 0.3s ease-in-out forwards;
 	}
 	
@@ -228,11 +228,20 @@
 			}
 			
 		};
-		document.getElementById('button_playlist').onclick = function() {
+		document.getElementById('button_playlist').onclick = function(e) {
+			if(e != null)
+				e.stopPropagation();
 			playlistVisible = !playlistVisible;
 			var playlistDom = document.getElementById("controls_playlist_container");
 			playlistDom.className = ((playlistVisible) ? "animate_controls_playlist_slideleft" : "animate_controls_playlist_slideright");
 		};
+		document.getElementById('controls_playlist_container').onclick = function(e) {
+			e.stopPropagation();
+		}
+		document.getElementsByTagName('body')[0].onclick = function() {
+			if(playlistVisible)
+				document.getElementById('button_playlist').onclick();
+		}
 
 		//Start the animation
 		animateUpdate.start();
