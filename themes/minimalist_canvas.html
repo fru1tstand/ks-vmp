@@ -1,0 +1,263 @@
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+<style type="text/css">
+	html, body {
+		padding: 0;
+		margin: 0;
+		height: 100%;
+		
+		background-color: #000;
+		color: #FFF;
+		font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+	}
+	
+	.container {
+		margin: 0px auto;
+		width: 76.8%;
+		max-width: 1024px;
+	}
+	
+	#spectrum_push {
+		height:50px;
+	}
+	#spectrum {
+		height: 500px;
+		width: 100%;
+		background-color:#333;
+	}
+	
+	#spectrum_container {
+		display: inline;
+	}
+	#spectrum_container div {
+		display: inline-block;
+		width: .75%;
+		background-color: transparent;
+		height: 0px;
+		vertical-align:bottom;
+		border-top: 1px solid #FFF;
+		border-bottom: 1px solid #FFF;
+		max-width: 8px;
+	}
+	.spectrum_baseline {
+		display:inline-block;
+		width: 0;
+		vertical-align:bottom;
+		height: 100%;
+	}
+	
+	#timebar {
+		background-color: transparent;
+		cursor: pointer;
+	}
+	#timebar:hover {
+		background-color: #191919;
+	}
+	#timebar_pos {
+		height: 20px;
+		background-color: #111;
+		width: 0;
+	}
+	#time_total, #time_current {
+		overflow: visible;
+		display: inline-block;
+	}
+	#time_total {
+		float: left;
+		margin: 0 0 0 10px;
+	}
+	#time_current {
+		float: right;
+		text-align: right;
+		margin: -20px 10px 0 0;
+	}
+	
+	#controls button {
+		background-color: transparent;
+		border: 1px solid #151515;
+		border-left:none;
+		border-right: none;
+		height: 80px;
+		width: 160px;
+		color: #151515;
+		font-weight: bold;
+		font-size: 22px;
+		cursor: pointer;
+		outline: 0;
+		outline-style: none;
+		outline-width: 0;
+		margin: 0 10px;
+	}
+	#controls button:hover {
+		border-color: #333;
+		color: #333;
+	}
+	#controls_container {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 40px;
+		animation: slidedown 0.3s ease-in-out forwards;
+		-webkit-animation: slidedown 0.3s ease-in-out forwards;
+	}
+	#controls {
+		text-align:center;
+	}
+	#control_toggle {
+		text-align: center;
+		height: 30px;
+		color: #151515;
+		font-size: 28px;
+		margin-bottom: 15px;
+	}
+	#controls_container:hover {
+		animation: slideup 0.3s ease-in-out forwards;
+		-webkit-animation: slideup 0.3s ease-in-out forwards;
+		color: #333;
+	}
+	
+	/*CSS animations*/
+	@keyframes slideup {
+		from {
+			height: 40px;
+		}
+		to {
+			height: 160px;
+		}
+	}
+	@-webkit-keyframes slideup {
+		from {
+			height: 40px;
+		}
+		to {
+			height: 160px;
+		}
+	}
+	@keyframes slidedown {
+		from {
+			height: 160px;
+		}
+		to {
+			height: 40px;
+		}
+	}
+	@-webkit-keyframes slidedown {
+		from {
+			height: 160px;
+		}
+		to {
+			height: 40px;
+		}
+	}
+</style>
+
+<div id="spectrum_push"></div>
+<canvas id="spectrum">
+</canvas>
+
+<div id="timebar" class="container">
+	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
+</div>
+
+<div class="container">
+<span id="fps" style="color:#FFF"></span>
+	<div>
+		<input type="file" id="input_songs" webkitdirectory multiple>
+	</div>
+</div>
+
+<div id="controls_container" class="container">
+	<div id="control_toggle"><i class='fa fa-caret-up'></i></div>
+	<div id="controls">
+		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
+		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
+	</div>
+</div>
+
+
+<script src="/visualmusicproject/js/Spectrum.js"></script>
+<script src="/visualmusicproject/js/AnimateUpdate.js"></script>
+<script src="/visualmusicproject/js/Playlist.js"></script>
+<script>
+	//Setup spectrum
+	var vis = new Spectrum("freq_", 128, "squared");
+	var animateUpdate = new AnimateUpdate();
+
+	//Grab some DOM elements
+	var fpsCounter = document.getElementById("fps");
+	var currentTime = document.getElementById("time_current");
+	var songTime = document.getElementById("time_total");
+	var timePosition = document.getElementById("timebar_pos");
+	var timebar = document.getElementById("timebar");
+	
+	var cPlayTime = 0;
+
+	//Setup callbacks and pages
+	vis.events.onUpdate = function(e) {
+// 		for(var i = 0; i < e.self.fields.domArray.length; i++)
+// 			e.self.fields.domArray[i].style.height = (e.freqData[e.self.fields.samplePoints[i]] / 255) * e.self.fields.domHeightMax + "px";
+	};
+	animateUpdate.setCallback(function(pDiff) {
+		//Update spectrum
+		vis.update(system.audioPlayer.getFrequencyData());
+		
+		//Display FPS
+		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
+		
+		//Display play time
+		cPlayTime = system.audioPlayer.getPlayTime();
+		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		
+		//Calculate time bar
+		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		
+		//Display song time
+		cPlayTime = system.audioPlayer.getCurrentAudioLength();
+		songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+	});
+	timebar.onclick = function(e) {
+		if(system.audioPlayer.isAudioReady()) {
+			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
+		}
+	};
+
+	//Set up event handlers
+	document.getElementById('input_songs').onchange = function() {
+ 		system.playlist.add(this.files);
+	};
+
+	//Make buttons do things
+	document.getElementById('button_stop').onclick = function() {
+		if(system.audioPlayer.isPlaying())
+			document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
+		
+		system.audioPlayer.stop(true);
+	};
+	document.getElementById('button_play').onclick = function() {
+		if(system.audioPlayer.isPlaying()) {
+			system.audioPlayer.pause();
+			this.innerHTML = "<i class='fa fa-play'></i>";
+		} else {
+			if(system.playlist.hasAudio())
+				this.innerHTML = "<i class='fa fa-pause'></i>";
+			system.playlist.play();
+		}
+		
+	};
+
+	//Start the animation
+	animateUpdate.start();
+
+	function destroy(p_callback) {
+		animateUpdate.stop();
+		animateUpdate.setCallback(null);
+		vis = null;
+		animateUpdate = null
+		fpsCounter = null;
+		timebar = null;
+		timebar_scrub = null;
+		
+		if(system.isMethod(p_callback))
+			p_callback();
+	};
+</script>
