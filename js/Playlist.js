@@ -24,12 +24,14 @@ var Playlist = function(p_audioPlayer) {
 				if(self.fields.audioPlayer.isPlaying())
 					self.fields.audioPlayer.stop(true);
 				
+				//Stage some stuff
 				self.resetPlayedList();
-				
 				self.fields.audioPlayer.clearNextBuffer();
 				
-				
-				//TODO: complete
+				self.state.playNextCalled = true;
+				self.internals.queueAudio(null, {
+					forceNext: this.getAttribute("data-pl-idx")
+				});
 			}
 	};
 	
@@ -59,7 +61,7 @@ var Playlist = function(p_audioPlayer) {
 				if(!p_ignorePlaying && self.fields.audioPlayer.isPlaying())
 					self.fields.audioPlayer.stop(false);
 				
-				if(!self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
+				if(!self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {		// Current: False	Next: False
 					if(!self.state.isQueueActive)
 						self.internals.queueAudio(self.internals.playPlaylist);
 				} else if(!self.fields.audioPlayer.isAudioReady() && self.fields.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
@@ -76,7 +78,7 @@ var Playlist = function(p_audioPlayer) {
 						self.fields.audioPlayer.play(p_playOptions);
 				}
 			},
-			playNextPlaylist: function(p_ignorePlaying, p_playOptions) {
+			playNextPlaylist: function(p_ignorePlaying) {
 				if(self.state.isQueueActive) {
 					system.addMessage("Waiting for audio to load before playing");
 					self.state.playNextCalled = true;
@@ -91,7 +93,13 @@ var Playlist = function(p_audioPlayer) {
 				if(self.state.repeat == 2)
 					return true;
 				
-				self.fields.playNextIndex = ((self.state.shuffle) ? Math.round(Math.random() * self.fields.playlist.length) : (++self.fields.playNextIndex % self.fields.playlist.length));
+				if(p_indexOptions == null)
+					p_indexOptions = {};
+				
+				if(p_indexOptions.forceNext == null || p_indexOptions.forceNext > 0 || p_indexOptions.forceNext < this.fields.playlist.length)
+					self.fields.playNextIndex = ((self.state.shuffle) ? Math.round(Math.random() * self.fields.playlist.length) : (++self.fields.playNextIndex % self.fields.playlist.length));
+				else
+					self.fields.playNextIndex = p_indexOptions.forceNext;
 				
 				if(self.state.repeat == 0) {
 					if(self.isComplete())
@@ -116,8 +124,8 @@ var Playlist = function(p_audioPlayer) {
 				system.addMessage("Next audio file is " + self.fields.playlist[self.fields.playNextIndex].name + " (Indexed at " + self.fields.playNextIndex + ")");
 				return true;
 			},
-			queueAudio: function(p_loadCompleteCallback) {
-				if(!self.internals.indexNextSong())
+			queueAudio: function(p_loadCompleteCallback, p_indexOptions) {
+				if(!self.internals.indexNextSong(p_indexOptions))
 					return system.addMessage("That's the end of this playlist");
 	
 				self.state.isQueueActive = true;
