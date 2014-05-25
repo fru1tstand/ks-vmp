@@ -11,7 +11,17 @@ var Spectrum = function(p_domPrefix, p_barCount, p_function) {
 			domHeightMax: 500,
 			domArray: null,
 			samplePoints: null,
-			domIdPrefix: ""
+			domIdPrefix: "",
+			
+			//Others
+			onUpdateEvent: {
+				self: this,
+				freqData: null
+			}
+	};
+	
+	this.events = {
+			onUpdate: null
 	};
 	
 	this.internal = {
@@ -43,8 +53,9 @@ var Spectrum = function(p_domPrefix, p_barCount, p_function) {
 
 Spectrum.prototype = {
 		update: function(p_freqData) {
-			for(var i = 0; i < this.fields.domArray.length; i++)
-				this.fields.domArray[i].style.height = (p_freqData[this.fields.samplePoints[i]] / 255) * this.fields.domHeightMax + "px";
+			this.fields.onUpdateEvent.freqData = p_freqData;
+			if(system.isMethod(this.events.onUpdate))
+				this.events.onUpdate(this.fields.onUpdateEvent);
 		},
 		
 		//HTML binding
