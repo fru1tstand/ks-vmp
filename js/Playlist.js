@@ -7,14 +7,30 @@
 var Playlist = function(p_audioPlayer) {
 	var self = this;
 	this.fields = {
-		playlist: new Array(),
-		playedList: new Array(),
-		playNextIndex: -1,
-		audioPlayer: null
+			playlist: new Array(),
+			playedList: new Array(),
+			playNextIndex: -1,
+			audioPlayer: null
 	};
 	
 	this.events = {
-			onSongComplete: null
+			onSongComplete: null,
+			
+			//html dom events
+			onSongSelect: function() {
+				if(!self.isReady())
+					return system.addError("Playlist's onSongSelect event was fired, but Playlist has yet to be instantiated");
+				
+				if(self.fields.audioPlayer.isPlaying())
+					self.fields.audioPlayer.stop(true);
+				
+				self.resetPlayedList();
+				
+				self.fields.audioPlayer.clearNextBuffer();
+				
+				
+				//TODO: complete
+			}
 	};
 	
 	this.state = {
@@ -25,96 +41,96 @@ var Playlist = function(p_audioPlayer) {
 	};
 	
 	this.internals = {
-		validateFileExtention: function(p_name) {
-			var ext = p_name.substring(p_name.length -3).toLowerCase();
-			return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "webm" || ext == "aac" || ext == "mp4");
-		},
-		playPlaylist: function(p_ignorePlaying, p_playOptions) {
-			if(self.fields.playlist.length < 1)
-				return system.addError("There are no audio files currently loaded in the playlist");
-			
-			if(p_ignorePlaying == null)
-				p_ignorePlaying = false;
-			
-			if(p_playOptions == null)
-				p_playOptions = {};
-			p_playOptions.onComplete = self.internals.playNextPlaylist;
-			
-			if(!p_ignorePlaying && self.fields.audioPlayer.isPlaying())
-				self.fields.audioPlayer.stop(false);
-			
-			if(!self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
-				if(!self.state.isQueueActive)
-					self.internals.queueAudio(self.internals.playPlaylist);
-			} else if(!self.fields.audioPlayer.isAudioReady() && self.fields.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
-				self.fields.audioPlayer.playNext(p_playOptions);
-				if(!self.state.isQueueActive)
-					self.internals.queueAudio();
-			} else if(self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
-				if(!self.fields.audioPlayer.isPlaying())
-					self.fields.audioPlayer.play(p_playOptions);
-				if(!self.state.isQueueActive)
-					self.internals.queueAudio();
-			} else { 																		// Current: True	Next: True
-				if(!self.fields.audioPlayer.isPlaying())
-					self.fields.audioPlayer.play(p_playOptions);
-			}
-		},
-		playNextPlaylist: function(p_ignorePlaying, p_playOptions) {
-			if(self.state.isQueueActive) {
-				system.addMessage("Waiting for audio to load before playing");
-				self.state.playNextCalled = true;
-			} else {
-				self.fields.audioPlayer.clearCurrentBuffer();
-				self.internals.playPlaylist();
-				if(system.isMethod(self.events.onSongComplete))
-					self.events.onSongComplete();
-			}
-		},
-		indexNextSong: function() {
-			if(self.state.repeat == 2)
-				return true;
-			
-			self.fields.playNextIndex = ((self.state.shuffle) ? Math.round(Math.random() * self.fields.playlist.length) : (++self.fields.playNextIndex % self.fields.playlist.length));
-			
-			if(self.state.repeat == 0) {
-				if(self.isComplete())
-					return false;
+			validateFileExtention: function(p_name) {
+				var ext = p_name.substring(p_name.length -3).toLowerCase();
+				return (ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "webm" || ext == "aac" || ext == "mp4");
+			},
+			playPlaylist: function(p_ignorePlaying, p_playOptions) {
+				if(self.fields.playlist.length < 1)
+					return system.addError("There are no audio files currently loaded in the playlist");
 				
-				var matchFound = false;
-				do {
-					matchFound = false;
-					for(var i = 0; i < self.fields.playedList.length; i++) {
-						if(self.fields.playNextIndex == self.fields.playedList[i]) {
-							matchFound = true;
-							self.fields.playNextIndex = (++self.fields.playNextIndex % self.fields.playlist.length);
-							break;
-						}
-					}
-				} while(matchFound);
-			}
-			
-			self.fields.playedList.push(self.fields.playNextIndex);
-			//system.addMessage(self.fields.playlist);
-			//system.addMessage(self.fields.playedList);
-			system.addMessage("Next audio file is " + self.fields.playlist[self.fields.playNextIndex].name + " (Indexed at " + self.fields.playNextIndex + ")");
-			return true;
-		},
-		queueAudio: function(p_loadCompleteCallback) {
-			if(!self.internals.indexNextSong())
-				return system.addMessage("That's the end of this playlist");
-
-			self.state.isQueueActive = true;
-			self.fields.audioPlayer.loadBufferFromFile(self.fields.playlist[self.fields.playNextIndex], function() {
-				self.state.isQueueActive = false;
-				if(self.state.playNextCalled) {
-					self.state.playNextCalled = false;
-					self.internals.playNextPlaylist();
+				if(p_ignorePlaying == null)
+					p_ignorePlaying = false;
+				
+				if(p_playOptions == null)
+					p_playOptions = {};
+				p_playOptions.onComplete = self.internals.playNextPlaylist;
+				
+				if(!p_ignorePlaying && self.fields.audioPlayer.isPlaying())
+					self.fields.audioPlayer.stop(false);
+				
+				if(!self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {			// Current: False	Next: False
+					if(!self.state.isQueueActive)
+						self.internals.queueAudio(self.internals.playPlaylist);
+				} else if(!self.fields.audioPlayer.isAudioReady() && self.fields.audioPlayer.isAudioQueueReady()) {	// Current: False	Next: True
+					self.fields.audioPlayer.playNext(p_playOptions);
+					if(!self.state.isQueueActive)
+						self.internals.queueAudio();
+				} else if(self.fields.audioPlayer.isAudioReady() && !self.fields.audioPlayer.isAudioQueueReady()) {	// Current: True	Next: False
+					if(!self.fields.audioPlayer.isPlaying())
+						self.fields.audioPlayer.play(p_playOptions);
+					if(!self.state.isQueueActive)
+						self.internals.queueAudio();
+				} else { 																		// Current: True	Next: True
+					if(!self.fields.audioPlayer.isPlaying())
+						self.fields.audioPlayer.play(p_playOptions);
 				}
-				if(system.isMethod(p_loadCompleteCallback))
-					p_loadCompleteCallback();
-			});
-		}
+			},
+			playNextPlaylist: function(p_ignorePlaying, p_playOptions) {
+				if(self.state.isQueueActive) {
+					system.addMessage("Waiting for audio to load before playing");
+					self.state.playNextCalled = true;
+				} else {
+					self.fields.audioPlayer.clearCurrentBuffer();
+					self.internals.playPlaylist();
+					if(system.isMethod(self.events.onSongComplete))
+						self.events.onSongComplete();
+				}
+			},
+			indexNextSong: function(p_indexOptions) {
+				if(self.state.repeat == 2)
+					return true;
+				
+				self.fields.playNextIndex = ((self.state.shuffle) ? Math.round(Math.random() * self.fields.playlist.length) : (++self.fields.playNextIndex % self.fields.playlist.length));
+				
+				if(self.state.repeat == 0) {
+					if(self.isComplete())
+						return false;
+					
+					var matchFound = false;
+					do {
+						matchFound = false;
+						for(var i = 0; i < self.fields.playedList.length; i++) {
+							if(self.fields.playNextIndex == self.fields.playedList[i]) {
+								matchFound = true;
+								self.fields.playNextIndex = (++self.fields.playNextIndex % self.fields.playlist.length);
+								break;
+							}
+						}
+					} while(matchFound);
+				}
+				
+				self.fields.playedList.push(self.fields.playNextIndex);
+				//system.addMessage(self.fields.playlist);
+				//system.addMessage(self.fields.playedList);
+				system.addMessage("Next audio file is " + self.fields.playlist[self.fields.playNextIndex].name + " (Indexed at " + self.fields.playNextIndex + ")");
+				return true;
+			},
+			queueAudio: function(p_loadCompleteCallback) {
+				if(!self.internals.indexNextSong())
+					return system.addMessage("That's the end of this playlist");
+	
+				self.state.isQueueActive = true;
+				self.fields.audioPlayer.loadBufferFromFile(self.fields.playlist[self.fields.playNextIndex], function() {
+					self.state.isQueueActive = false;
+					if(self.state.playNextCalled) {
+						self.state.playNextCalled = false;
+						self.internals.playNextPlaylist();
+					}
+					if(system.isMethod(p_loadCompleteCallback))
+						p_loadCompleteCallback();
+				});
+			}
 	};
 	
 	//*********************************************************************************** Constructor
@@ -242,6 +258,17 @@ Playlist.prototype = {
 		},
 		resetPlayedList: function() {
 			this.fields.playedList = new Array();
+		},
+		
+		//HTML stuff
+		createDOM: function(p_containerId) {
+			var cont = document.getElementById(p_containerId);
+			for(var i = 0; i < this.fields.playlist.length; i++) {
+				var elem = document.createElement("div");
+				elem.setAttribute("data-pl-idx", i);
+				elem.onclick = this.events.onSongSelect;
+				cont.appendChild(elem);
+			}
 		},
 		
 		//Getters
