@@ -4,6 +4,6 @@
  - [ ] Playlist editing
  - [ ] Prev/Next controls
  - [ ] Remove HTML DOM methods and fields from Spectrum
- - [ ] Test HTML5 canvas vs HTML DOM efficiency
+ - [x] Test HTML5 canvas vs HTML DOM efficiency
  
  - [ ] This space intentionally left BLANK!
