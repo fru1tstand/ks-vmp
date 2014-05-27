@@ -21,28 +21,7 @@
 	}
 	#spectrum {
 		height: 500px;
-		width: 100%;
 		background-color:#333;
-	}
-	
-	#spectrum_container {
-		display: inline;
-	}
-	#spectrum_container div {
-		display: inline-block;
-		width: .75%;
-		background-color: transparent;
-		height: 0px;
-		vertical-align:bottom;
-		border-top: 1px solid #FFF;
-		border-bottom: 1px solid #FFF;
-		max-width: 8px;
-	}
-	.spectrum_baseline {
-		display:inline-block;
-		width: 0;
-		vertical-align:bottom;
-		height: 100%;
 	}
 	
 	#timebar {
@@ -152,8 +131,10 @@
 </style>
 
 <div id="spectrum_push"></div>
-<canvas id="spectrum">
-</canvas>
+<div class="container">
+	<canvas id="spectrum"></canvas>
+</div>
+
 
 <div id="timebar" class="container">
 	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
@@ -190,12 +171,23 @@
 	var timePosition = document.getElementById("timebar_pos");
 	var timebar = document.getElementById("timebar");
 	
+	var ctx = document.getElementById("spectrum").getContext("2d"),
+		cDrawHeight = 0,
+		cWidth = ctx.canvas.width / vis.fields.samplePoints.length;
+	
 	var cPlayTime = 0;
 
 	//Setup callbacks and pages
 	vis.events.onUpdate = function(e) {
-// 		for(var i = 0; i < e.self.fields.domArray.length; i++)
-// 			e.self.fields.domArray[i].style.height = (e.freqData[e.self.fields.samplePoints[i]] / 255) * e.self.fields.domHeightMax + "px";
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+ 		for(var i = 0; i < e.self.fields.domArray.length; i++) {
+ 			cDrawHeight = ctx.canvas.height - (e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height;
+ 			ctx.moveTo(i * cWidth, cDrawHeight);
+ 			ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+ 			
+ 		}
+ 		ctx.stroke();
+ 			//e.self.fields.domArray[i].style.height = ;
 	};
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum

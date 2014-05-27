@@ -7,7 +7,6 @@
 
 //Global vars
 var System = function() {
-	//Singleton pattern, because we really only want one system class
 	if (arguments.callee._singletonInstance)
 		return arguments.callee.singletonInstance;
 	arguments.callee._singletonInstance = this;
