@@ -22,6 +22,7 @@
 	#spectrum {
 		height: 500px;
 		background-color: #000;
+		border-bottom: 1px solid white;
 	}
 	
 	#timebar {
@@ -174,28 +175,43 @@
 	
 	var ctx = document.getElementById("spectrum").getContext("2d");
 	ctx.canvas.width = aContainer.offsetWidth;
-	ctx.canvas.height = aContainer.offsetHeight;
+	ctx.canvas.height = 500;
 	
 	var
 		cDrawHeight = 0,
+		cDrawHeightO = 0,
 		cWidth = ctx.canvas.width / vis.fields.samplePoints.length;
-	ctx.lineWidth = 1.8;
-	ctx.strokeStyle = '#FFFFFF';
 	
 	
 	var cPlayTime = 0;
+	ctx.strokeStyle = '#FFFFFF';
+	ctx.lineWidth = 1;
+	var visAnimations = {
+			bars: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				for(var i = 0; i < e.self.fields.domArray.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
+					ctx.moveTo(i * cWidth, cDrawHeight);
+					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+				}
+				ctx.stroke();
+			},
+			lines: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				ctx.moveTo(0, ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[0]] / 255) * ctx.canvas.height));
+				for(var i = 1; i < e.self.fields.domArray.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
+					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+					ctx.stroke();
+				}
+			}
+	};
 
 	//Setup callbacks and pages
-	vis.events.onUpdate = function(e) {
-		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		ctx.beginPath();
-		for(var i = 0; i < e.self.fields.domArray.length; i++) {
-			cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
-			ctx.moveTo(i * cWidth, cDrawHeight);
-			ctx.lineTo((i + 1) * cWidth, cDrawHeight);
-		}
-		ctx.stroke();
-	};
+	vis.events.onUpdate = visAnimations.lines;
+	
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum
 		vis.update(system.audioPlayer.getFrequencyData());
