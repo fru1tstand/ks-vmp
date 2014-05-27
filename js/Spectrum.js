@@ -10,8 +10,9 @@
 		
 		this.fields = {
 				//Spectrum settings
-				highpassCutoff: 512,	//(lowpassCutoff, 1023]
+				highpassCutoff: 256,	//(lowpassCutoff, 1023]
 				lowpassCutoff: 0,		//[0, highpassCutoff)
+				specFunction: null,
 				
 				//Dom elements
 				domHeightMax: 500,
@@ -31,29 +32,40 @@
 		};
 		
 		this.internal = {
-				setSamplePoints: function(p_barCount, p_function) {
+				setSamplePoints: function() {
 					var i_function;
-					switch(p_function) {
+					switch(self.fields.specFunction) {
 					case "squared":
 						i_function = function(x) {
-							return Math.pow(0.15 * (x + 18), 2) - 7;
+							return Math.pow(x, 2);
 						};
 						break;
 					case "linear":
 					default:
 						i_function = function(x) {
-							return (1023 - self.fields.highpassCutoff) / p_barCount * x;
+							return (1023 - self.fields.highpassCutoff) / self.fields.samplePoints.length * x;
 						};
 					}
-					self.fields.samplePoints = new Array(p_barCount);
-					for(var i = 0; i < p_barCount; i++)
-						self.fields.samplePoints[i] = Math.round(Math.min(Math.max(i_function(i), self.fields.lowpassCutoff), self.fields.highpassCutoff));
+					var valMax = i_function(self.fields.samplePoints.length - 1),
+						valMin = i_function(0);
+					var scale = (self.fields.highpassCutoff - self.fields.lowpassCutoff) / (valMax - valMin);
+					
+					for(var i = 0; i < self.fields.samplePoints.length; i++) {
+						self.fields.samplePoints[i] = Math.round(Math.max(i_function(i) * scale, 1));
+						if(i != 0 && self.fields.samplePoints[i] <= self.fields.samplePoints[i - 1])
+							self.fields.samplePoints[i] = self.fields.samplePoints[i - 1] + 1;
+					}
+						 //Math.round(Math.min(Math.max(i_function(i), self.fields.lowpassCutoff), self.fields.highpassCutoff));
+					
+					system.addMessage(self.fields.samplePoints);
 				}
 		};
 		
 		//*********************************************************************************** Construct
 		this.fields.domArray = new Array(p_barCount);
-		this.internal.setSamplePoints(p_barCount, p_function);
+		this.fields.samplePoints = new Array(p_barCount);
+		this.fields.specFunction = p_function;
+		this.internal.setSamplePoints();
 		this.fields.domIdPrefix = p_domPrefix;
 	};
 
@@ -78,6 +90,16 @@
 			for(var i = 0; i < this.fields.domArray.length; i++)
 				this.fields.domArray[i] = document.getElementById(this.fields.domIdPrefix + i);
 				return this;
+			},
+			
+			//Spectrum control
+			setHighpass: function(p_high) {
+				this.fields.highpassCutoff = p_high;
+				this.internal.setSamplePoints();
+			},
+			setLowpass: function(p_low) {
+				this.fields.lowpassCutoff = p_low;
+				this.internal.setSamplePoints();
 			}
 	};
 	
