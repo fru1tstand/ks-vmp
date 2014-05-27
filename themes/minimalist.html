@@ -251,7 +251,7 @@
 		//Start the animation
 		animateUpdate.start();
 
-		function destroy(p_callback) {
+		system.setDestroy(function(p_callback) {
 			animateUpdate.stop();
 			animateUpdate.setCallback(null);
 			vis = null;
@@ -262,6 +262,6 @@
 			
 			if(system.isMethod(p_callback))
 				p_callback();
-		};
+		});
 	})(this, document);
 </script>

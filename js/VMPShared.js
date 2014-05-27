@@ -22,7 +22,8 @@
 		};
 		this.events = {
 			message: null,
-			error: null
+			error: null,
+			onDestroy: null
 		};
 		
 		//We'll need this later!
@@ -30,7 +31,7 @@
 		this.playlist = null;
 		
 		//Lets load the first theme, ever
-		this.loadTheme("themes/minimalist.html");
+		this.loadTheme("themes/minimalist_canvas.html");
 	};
 
 	System.prototype = {
@@ -121,8 +122,8 @@
 				});
 			},
 			clearTheme: function() {
-				if(this.isMethod(destroy)) {
-					destroy(this.breakTheme);
+				if(this.isMethod(this.events.onDestroy)) {
+					this.events.onDestroy(this.breakTheme);
 				} else {
 					addError("No clean destroy method was found. This might cause errors!");
 					this.breakTheme();
@@ -131,6 +132,9 @@
 			},
 			breakTheme: function() {
 				document.body.innerHTML = "";
+			},
+			setDestroy: function(p_destroy) {
+				this.events.onDestroy = p_destroy;
 			}
 	};
 

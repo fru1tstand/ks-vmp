@@ -21,7 +21,7 @@
 	}
 	#spectrum {
 		height: 500px;
-		background-color:#333;
+		background-color: #000;
 	}
 	
 	#timebar {
@@ -131,7 +131,7 @@
 </style>
 
 <div id="spectrum_push"></div>
-<div class="container">
+<div class="container" id="spectrum_container">
 	<canvas id="spectrum"></canvas>
 </div>
 
@@ -170,24 +170,31 @@
 	var songTime = document.getElementById("time_total");
 	var timePosition = document.getElementById("timebar_pos");
 	var timebar = document.getElementById("timebar");
+	var aContainer = document.getElementById("spectrum_container");
 	
-	var ctx = document.getElementById("spectrum").getContext("2d"),
+	var ctx = document.getElementById("spectrum").getContext("2d");
+	ctx.canvas.width = aContainer.offsetWidth;
+	ctx.canvas.height = aContainer.offsetHeight;
+	
+	var
 		cDrawHeight = 0,
 		cWidth = ctx.canvas.width / vis.fields.samplePoints.length;
+	ctx.lineWidth = 1.8;
+	ctx.strokeStyle = '#FFFFFF';
+	
 	
 	var cPlayTime = 0;
 
 	//Setup callbacks and pages
 	vis.events.onUpdate = function(e) {
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
- 		for(var i = 0; i < e.self.fields.domArray.length; i++) {
- 			cDrawHeight = ctx.canvas.height - (e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height;
- 			ctx.moveTo(i * cWidth, cDrawHeight);
- 			ctx.lineTo((i + 1) * cWidth, cDrawHeight);
- 			
- 		}
- 		ctx.stroke();
- 			//e.self.fields.domArray[i].style.height = ;
+		ctx.beginPath();
+		for(var i = 0; i < e.self.fields.domArray.length; i++) {
+			cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
+			ctx.moveTo(i * cWidth, cDrawHeight);
+			ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+		}
+		ctx.stroke();
 	};
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum
@@ -240,7 +247,7 @@
 	//Start the animation
 	animateUpdate.start();
 
-	function destroy(p_callback) {
+	system.setDestroy(function(p_callback) {
 		animateUpdate.stop();
 		animateUpdate.setCallback(null);
 		vis = null;
@@ -251,5 +258,5 @@
 		
 		if(system.isMethod(p_callback))
 			p_callback();
-	};
+	});
 </script>
