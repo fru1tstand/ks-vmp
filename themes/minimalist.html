@@ -175,6 +175,10 @@
 
 		//Setup callbacks and pages
 		vis.createDOM("spectrum_container").bindToDOM();
+		vis.events.onUpdate = function(e) {
+			for(var i = 0; i < e.self.fields.domArray.length; i++)
+				e.self.fields.domArray[i].style.height = (e.freqData[e.self.fields.samplePoints[i]] / 255) * e.self.fields.domHeightMax + "px";
+		};
 		animateUpdate.setCallback(function(pDiff) {
 			//Update spectrum
 			vis.update(system.audioPlayer.getFrequencyData());
