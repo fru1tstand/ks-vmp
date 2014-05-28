@@ -10,21 +10,14 @@
 		
 		this.fields = {
 				//Spectrum settings
-				highpassCutoff: 256,	//(lowpassCutoff, 1023]
+				highpassCutoff: 255,	//(lowpassCutoff, 1023]
 				lowpassCutoff: 0,		//[0, highpassCutoff)
 				specFunction: null,
 				
 				//Dom elements
 				domHeightMax: 500,
-				domArray: null,
 				samplePoints: null,
-				domIdPrefix: "",
-				
-				//Others
-				onUpdateEvent: {
-					self: this,
-					freqData: null
-				}
+				samplePointsData: null
 		};
 		
 		this.events = {
@@ -43,7 +36,7 @@
 					case "linear":
 					default:
 						i_function = function(x) {
-							return (1023 - self.fields.highpassCutoff) / self.fields.samplePoints.length * x;
+							return (1023 - self.fields.highpassCutoff) / self.fields.samplePoints.length * x - 1;
 						};
 					}
 					var valMax = i_function(self.fields.samplePoints.length - 1),
@@ -54,6 +47,8 @@
 						self.fields.samplePoints[i] = Math.round(Math.max(i_function(i) * scale, 1));
 						if(i != 0 && self.fields.samplePoints[i] <= self.fields.samplePoints[i - 1])
 							self.fields.samplePoints[i] = self.fields.samplePoints[i - 1] + 1;
+						
+						self.fields.samplePoints[i] = Math.min(Math.max(self.fields.samplePoints[i], self.fields.lowpassCutoff), self.fields.highpassCutoff);
 					}
 						 //Math.round(Math.min(Math.max(i_function(i), self.fields.lowpassCutoff), self.fields.highpassCutoff));
 					
@@ -62,34 +57,22 @@
 		};
 		
 		//*********************************************************************************** Construct
-		this.fields.domArray = new Array(p_barCount);
 		this.fields.samplePoints = new Array(p_barCount);
+		this.fields.samplePointsData = new Array(p_barCount);
 		this.fields.specFunction = p_function;
 		this.internal.setSamplePoints();
-		this.fields.domIdPrefix = p_domPrefix;
+		
+		//Internal counter that never is garbaged collected
+		this.i = 0;
 	};
 
 	Spectrum.prototype = {
 			update: function(p_freqData) {
-				this.fields.onUpdateEvent.freqData = p_freqData;
+				for(this.i = 0; this.i < this.fields.samplePoints.length; this.i++)
+					this.fields.samplePointsData[this.i] = p_freqData[this.i];
+				
 				if(system.isMethod(this.events.onUpdate))
-					this.events.onUpdate(this.fields.onUpdateEvent);
-			},
-			
-			//HTML binding
-			createDOM: function(p_containerId) {
-				var cont = document.getElementById(p_containerId);
-				for(var i = 0; i < this.fields.domArray.length; i++) {
-					var insert = document.createElement("div");
-					insert.id = this.fields.domIdPrefix + i;
-					cont.appendChild(insert);
-				}
-				return this;
-			},
-			bindToDOM: function() {
-			for(var i = 0; i < this.fields.domArray.length; i++)
-				this.fields.domArray[i] = document.getElementById(this.fields.domIdPrefix + i);
-				return this;
+					this.events.onUpdate(this.fields.samplePointsData);
 			},
 			
 			//Spectrum control
@@ -100,6 +83,9 @@
 			setLowpass: function(p_low) {
 				this.fields.lowpassCutoff = p_low;
 				this.internal.setSamplePoints();
+			},
+			setAnimation: function(p_anim) {
+				this.events.onUpdate = p_anim;
 			}
 	};
 	
