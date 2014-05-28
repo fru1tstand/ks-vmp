@@ -16,40 +16,15 @@
 		max-width: 1024px;
 	}
 	
-	#spectrum_push {
-		height:50px;
-	}
-	#spectrum {
-		height: 500px;
-		background-color: #000;
-		border-bottom: 1px solid white;
-	}
+	#spectrum_push { height:50px; }
+	#spectrum { height: 500px; text-align: center; width: 100%; }
 	
-	#timebar {
-		background-color: transparent;
-		cursor: pointer;
-	}
-	#timebar:hover {
-		background-color: #191919;
-	}
-	#timebar_pos {
-		height: 20px;
-		background-color: #111;
-		width: 0;
-	}
-	#time_total, #time_current {
-		overflow: visible;
-		display: inline-block;
-	}
-	#time_total {
-		float: left;
-		margin: 0 0 0 10px;
-	}
-	#time_current {
-		float: right;
-		text-align: right;
-		margin: -20px 10px 0 0;
-	}
+	#timebar 		{ background-color: transparent; cursor: pointer; }
+	#timebar:hover 	{ background-color: #191919; }
+	#timebar_pos 	{ height: 20px; background-color: #111; width: 0; }
+	#time_total, #time_current { overflow: visible; display: inline-block; }
+	#time_total 	{ float: left; margin: 0 0 0 10px; }
+	#time_current 	{ float: right; text-align: right; margin: -20px 10px 0 0; }
 	
 	#controls button {
 		background-color: transparent;
@@ -67,92 +42,98 @@
 		outline-width: 0;
 		margin: 0 10px;
 	}
-	#controls button:hover {
-		border-color: #333;
-		color: #333;
-	}
+	#controls button:hover { border-color: #333; color: #333; }
 	#controls_container {
 		position: fixed;
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 40px;
-		animation: slidedown 0.3s ease-in-out forwards;
-		-webkit-animation: slidedown 0.3s ease-in-out forwards;
-	}
-	#controls {
-		text-align:center;
-	}
-	#control_toggle {
-		text-align: center;
 		height: 30px;
-		color: #151515;
-		font-size: 28px;
-		margin-bottom: 15px;
+		animation: controls_slidedown 0.3s ease-in-out forwards;
+		-webkit-animation: controls_slidedown 0.3s ease-in-out forwards;
 	}
+	#controls { text-align:center; margin-top: 40px; height: 100%; }
 	#controls_container:hover {
-		animation: slideup 0.3s ease-in-out forwards;
-		-webkit-animation: slideup 0.3s ease-in-out forwards;
+		animation: controls_slideup 0.3s ease-in-out forwards;
+		-webkit-animation: controls_slideup 0.3s ease-in-out forwards;
 		color: #333;
 	}
 	
+	#controls_playlist_container {
+		background-color: #000;
+		width: 0px;
+		position: fixed;
+		bottom: 0;
+		top: 0;
+		right: 0;
+	}
+
+	#controls_playlist {
+		width: 500px;
+		height: 100%;
+	}
+	.controls_playlist {
+		border: 1px solid #333;
+		border-left: none;
+		border-right: none;
+		padding: 5px;
+		height: 400px;
+		overflow: auto;
+		height: 50%;
+	}
+	
+	.animate_controls_playlist_slideleft {
+		animation: playlist_slideleft 0.3s ease-in-out forwards;
+		-webkit-animation: playlist_slideleft 0.3s ease-in-out forwards;
+		border-left: 1px solid #333;
+	}
+	.animate_controls_playlist_slideright {
+		animation: playlist_slideright 0.3s ease-in-out forwards;
+		-webkit-animation: playlist_slideright 0.3s ease-in-out forwards;
+	}
+	
 	/*CSS animations*/
-	@keyframes slideup {
-		from {
-			height: 40px;
-		}
-		to {
-			height: 160px;
-		}
-	}
-	@-webkit-keyframes slideup {
-		from {
-			height: 40px;
-		}
-		to {
-			height: 160px;
-		}
-	}
-	@keyframes slidedown {
-		from {
-			height: 160px;
-		}
-		to {
-			height: 40px;
-		}
-	}
-	@-webkit-keyframes slidedown {
-		from {
-			height: 160px;
-		}
-		to {
-			height: 40px;
-		}
-	}
+		/* #controls_playlist */
+	@keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
+	@-webkit-keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
+	@keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
+	@-webkit-keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
+	
+	
+		/* #controls */
+	@keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
+	@-webkit-keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
+	@keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
+	@-webkit-keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
 </style>
 
 <div id="spectrum_push"></div>
-<div class="container" id="spectrum_container">
+<div class="container">
 	<canvas id="spectrum"></canvas>
 </div>
-
 
 <div id="timebar" class="container">
 	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
 </div>
 
-<div class="container">
+<div class="container" id="spectrum_container">
 <span id="fps" style="color:#FFF"></span>
 	<div>
 		<input type="file" id="input_songs" webkitdirectory multiple>
 	</div>
 </div>
 
-<div id="controls_container" class="container">
-	<div id="control_toggle"><i class='fa fa-caret-up'></i></div>
+<div id="controls_container">
 	<div id="controls">
 		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
 		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
+		<button id="button_playlist" class="music_control"><i class="fa fa-list"></i></button>
+	</div>
+</div>
+
+<div id="controls_playlist_container">
+	<div id="controls_playlist">
+		<div class="controls_playlist" id="playlist_player">a</div>
 	</div>
 </div>
 
@@ -161,8 +142,11 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
+(function(window, document, undefined) {
+	
+
 	//Setup spectrum
-	var vis = new Spectrum("freq_", 128, "squared");
+	var vis = new Spectrum("freq_", 256, "squared");
 	var animateUpdate = new AnimateUpdate();
 
 	//Grab some DOM elements
@@ -183,15 +167,18 @@
 		cWidth = ctx.canvas.width / vis.fields.samplePoints.length;
 	
 	
-	var cPlayTime = 0;
+	var cPlayTime = 0,
+		playlistVisible = false;
+	
 	ctx.strokeStyle = '#FFFFFF';
 	ctx.lineWidth = 1;
+	var i = 0;
 	var visAnimations = {
-			bars: function(e) {
+			levels: function(e) {
 				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 				ctx.beginPath();
-				for(var i = 0; i < e.self.fields.domArray.length; i++) {
-					cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
+				for(i = 0; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
 					ctx.moveTo(i * cWidth, cDrawHeight);
 					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
 				}
@@ -200,17 +187,27 @@
 			lines: function(e) {
 				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 				ctx.beginPath();
-				ctx.moveTo(0, ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[0]] / 255) * ctx.canvas.height));
-				for(var i = 1; i < e.self.fields.domArray.length; i++) {
-					cDrawHeight = ctx.canvas.height - Math.round((e.freqData[e.self.fields.samplePoints[i]] / 255) * ctx.canvas.height);
+				ctx.moveTo(0, ctx.canvas.height - Math.round((e[0] / 255) * ctx.canvas.height));
+				for(i = 1; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
 					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
-					ctx.stroke();
 				}
+				ctx.stroke();
+			},
+			bars: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				for(i = 0; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
+					ctx.moveTo(i * cWidth, ctx.canvas.height);
+					ctx.lineTo(i * cWidth, cDrawHeight);
+				}
+				ctx.stroke();
 			}
 	};
 
 	//Setup callbacks and pages
-	vis.events.onUpdate = visAnimations.lines;
+	vis.setAnimation(visAnimations.bars);
 	
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum
@@ -235,6 +232,14 @@
 			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
 		}
 	};
+	system.playlist.events.onChange = function() {
+		var playlist = document.getElementById("playlist_player");
+		playlist.innerHTML = "";
+		for(var i = 0; i < system.playlist.fields.playlist.length; i++) {
+			playlist.innerHTML += system.playlist.fields.playlist[i].name + "<br />";
+		}
+	};
+	
 
 	//Set up event handlers
 	document.getElementById('input_songs').onchange = function() {
@@ -259,6 +264,20 @@
 		}
 		
 	};
+	document.getElementById('button_playlist').onclick = function(e) {
+		if(e != null)
+			e.stopPropagation();
+		playlistVisible = !playlistVisible;
+		var playlistDom = document.getElementById("controls_playlist_container");
+		playlistDom.className = ((playlistVisible) ? "animate_controls_playlist_slideleft" : "animate_controls_playlist_slideright");
+	};
+	document.getElementById('controls_playlist_container').onclick = function(e) {
+		e.stopPropagation();
+	}
+	document.getElementsByTagName('body')[0].onclick = function() {
+		if(playlistVisible)
+			document.getElementById('button_playlist').onclick();
+	}
 
 	//Start the animation
 	animateUpdate.start();
@@ -275,4 +294,6 @@
 		if(system.isMethod(p_callback))
 			p_callback();
 	});
+	
+}(this, document));
 </script>
