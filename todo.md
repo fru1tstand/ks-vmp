@@ -5,7 +5,7 @@
  - [ ] Playlist editing
  - [ ] Prev/Next controls
  - [ ] Add "previous audio" buffer
- - [ ] Remove HTML DOM methods and fields from Spectrum
+ - [x] Remove HTML DOM methods and fields from Spectrum
  - [x] Test HTML5 canvas vs HTML DOM efficiency
  
  - [ ] This space intentionally left BLANK!
