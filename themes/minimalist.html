@@ -17,19 +17,7 @@
 	}
 	
 	#spectrum_push { height:50px; }
-	#spectrum { height: 500px; text-align: center; }
-	#spectrum_container { display: inline; }
-	.spectrum_baseline { display:inline-block; width: 0; vertical-align:bottom; height: 100%; }
-	#spectrum_container div {
-		display: inline-block;
-		width: .75%;
-		background-color: transparent;
-		height: 0px;
-		vertical-align:bottom;
-		border-top: 1px solid #FFF;
-		border-bottom: 1px solid #FFF;
-		max-width: 8px;
-	}
+	#spectrum { height: 500px; text-align: center; width: 100%; }
 	
 	#timebar 		{ background-color: transparent; cursor: pointer; }
 	#timebar:hover 	{ background-color: #191919; }
@@ -120,17 +108,15 @@
 </style>
 
 <div id="spectrum_push"></div>
-<div id="spectrum">
-	<div class="spectrum_baseline"></div>
-	<div id="spectrum_container"></div>
-	<div class="spectrum_baseline"></div>
+<div class="container">
+	<canvas id="spectrum"></canvas>
 </div>
 
 <div id="timebar" class="container">
 	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
 </div>
 
-<div class="container">
+<div class="container" id="spectrum_container">
 <span id="fps" style="color:#FFF"></span>
 	<div>
 		<input type="file" id="input_songs" webkitdirectory multiple>
@@ -156,112 +142,158 @@
 <script src="/visualmusicproject/js/AnimateUpdate.js"></script>
 <script src="/visualmusicproject/js/Playlist.js"></script>
 <script>
-	(function(window, document, undefined) {
-		system.playlist.setShuffle(true);
-		//Setup spectrum
-		var vis = new Spectrum("freq_", 128, "squared");
-		var animateUpdate = new AnimateUpdate();
-
-		//Grab some DOM elements
-		var fpsCounter = document.getElementById("fps");
-		var currentTime = document.getElementById("time_current");
-		var songTime = document.getElementById("time_total");
-		var timePosition = document.getElementById("timebar_pos");
-		var timebar = document.getElementById("timebar");
+(function(window, document, undefined) {
 	
-		//Some fields used
-		var cPlayTime = 0,
-			playlistVisible = false;
 
-		//Setup callbacks and pages
-		vis.createDOM("spectrum_container").bindToDOM();
-		vis.events.onUpdate = function(e) {
-			for(var i = 0; i < e.self.fields.domArray.length; i++)
-				e.self.fields.domArray[i].style.height = (e.freqData[e.self.fields.samplePoints[i]] / 255) * e.self.fields.domHeightMax + "px";
-		};
-		animateUpdate.setCallback(function(pDiff) {
-			//Update spectrum
-			vis.update(system.audioPlayer.getFrequencyData());
-			
-			//Display FPS
-			fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
-			
-			//Display play time
-			cPlayTime = system.audioPlayer.getPlayTime();
-			currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-			
-			//Calculate time bar
-			timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
-			
-			//Display song time
-			cPlayTime = system.audioPlayer.getCurrentAudioLength();
-			songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
-		});
-		timebar.onclick = function(e) {
-			if(system.audioPlayer.isAudioReady()) {
-				system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
-			}
-		};
-		system.playlist.events.onChange = function() {
-			var playlist = document.getElementById("playlist_player");
-			playlist.innerHTML = "";
-			for(var i = 0; i < system.playlist.fields.playlist.length; i++) {
-				playlist.innerHTML += system.playlist.fields.playlist[i].name + "<br />";
-			}
-		};
+	//Setup spectrum
+	var vis = new Spectrum("freq_", 256, "squared");
+	var animateUpdate = new AnimateUpdate();
 
-		//Set up event handlers
-		document.getElementById('input_songs').onchange = function() {
-	 		system.playlist.add(this.files);
-		};
-
-		//Make buttons do things
-		document.getElementById('button_stop').onclick = function() {
-			if(system.audioPlayer.isPlaying())
-				document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
-			
-			system.audioPlayer.stop(true);
-		};
-		document.getElementById('button_play').onclick = function() {
-			if(system.audioPlayer.isPlaying()) {
-				system.audioPlayer.pause();
-				this.innerHTML = "<i class='fa fa-play'></i>";
-			} else {
-				if(system.playlist.hasAudio())
-					this.innerHTML = "<i class='fa fa-pause'></i>";
-				system.playlist.play();
+	//Grab some DOM elements
+	var fpsCounter = document.getElementById("fps");
+	var currentTime = document.getElementById("time_current");
+	var songTime = document.getElementById("time_total");
+	var timePosition = document.getElementById("timebar_pos");
+	var timebar = document.getElementById("timebar");
+	var aContainer = document.getElementById("spectrum_container");
+	
+	var ctx = document.getElementById("spectrum").getContext("2d");
+	ctx.canvas.width = aContainer.offsetWidth;
+	ctx.canvas.height = 500;
+	
+	var
+		cDrawHeight = 0,
+		cDrawHeightO = 0,
+		cWidth = ctx.canvas.width / vis.fields.samplePoints.length;
+	
+	
+	var cPlayTime = 0,
+		playlistVisible = false;
+	
+	ctx.strokeStyle = '#FFFFFF';
+	ctx.lineWidth = 1;
+	var i = 0;
+	var visAnimations = {
+			levels: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				for(i = 0; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
+					ctx.moveTo(i * cWidth, cDrawHeight);
+					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+				}
+				ctx.stroke();
+			},
+			lines: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				ctx.moveTo(0, ctx.canvas.height - Math.round((e[0] / 255) * ctx.canvas.height));
+				for(i = 1; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
+					ctx.lineTo((i + 1) * cWidth, cDrawHeight);
+				}
+				ctx.stroke();
+			},
+			bars: function(e) {
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+				ctx.beginPath();
+				for(i = 0; i < e.length; i++) {
+					cDrawHeight = ctx.canvas.height - Math.round((e[i] / 255) * ctx.canvas.height);
+					ctx.moveTo(i * cWidth, ctx.canvas.height);
+					ctx.lineTo(i * cWidth, cDrawHeight);
+				}
+				ctx.stroke();
 			}
-			
-		};
-		document.getElementById('button_playlist').onclick = function(e) {
-			if(e != null)
-				e.stopPropagation();
-			playlistVisible = !playlistVisible;
-			var playlistDom = document.getElementById("controls_playlist_container");
-			playlistDom.className = ((playlistVisible) ? "animate_controls_playlist_slideleft" : "animate_controls_playlist_slideright");
-		};
-		document.getElementById('controls_playlist_container').onclick = function(e) {
+	};
+
+	//Setup callbacks and pages
+	vis.setAnimation(visAnimations.bars);
+	
+	animateUpdate.setCallback(function(pDiff) {
+		//Update spectrum
+		vis.update(system.audioPlayer.getFrequencyData());
+		
+		//Display FPS
+		fpsCounter.innerHTML = Math.round(animateUpdate.getFPS());
+		
+		//Display play time
+		cPlayTime = system.audioPlayer.getPlayTime();
+		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+		
+		//Calculate time bar
+		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		
+		//Display song time
+		cPlayTime = system.audioPlayer.getCurrentAudioLength();
+		songTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
+	});
+	timebar.onclick = function(e) {
+		if(system.audioPlayer.isAudioReady()) {
+			system.audioPlayer.seek((e.clientX - e.currentTarget.offsetLeft) / e.currentTarget.clientWidth + "%");
+		}
+	};
+	system.playlist.events.onChange = function() {
+		var playlist = document.getElementById("playlist_player");
+		playlist.innerHTML = "";
+		for(var i = 0; i < system.playlist.fields.playlist.length; i++) {
+			playlist.innerHTML += system.playlist.fields.playlist[i].name + "<br />";
+		}
+	};
+	
+
+	//Set up event handlers
+	document.getElementById('input_songs').onchange = function() {
+ 		system.playlist.add(this.files);
+	};
+
+	//Make buttons do things
+	document.getElementById('button_stop').onclick = function() {
+		if(system.audioPlayer.isPlaying())
+			document.getElementById('button_play').innerHTML = "<i class='fa fa-play'></i>";
+		
+		system.audioPlayer.stop(true);
+	};
+	document.getElementById('button_play').onclick = function() {
+		if(system.audioPlayer.isPlaying()) {
+			system.audioPlayer.pause();
+			this.innerHTML = "<i class='fa fa-play'></i>";
+		} else {
+			if(system.playlist.hasAudio())
+				this.innerHTML = "<i class='fa fa-pause'></i>";
+			system.playlist.play();
+		}
+		
+	};
+	document.getElementById('button_playlist').onclick = function(e) {
+		if(e != null)
 			e.stopPropagation();
-		}
-		document.getElementsByTagName('body')[0].onclick = function() {
-			if(playlistVisible)
-				document.getElementById('button_playlist').onclick();
-		}
+		playlistVisible = !playlistVisible;
+		var playlistDom = document.getElementById("controls_playlist_container");
+		playlistDom.className = ((playlistVisible) ? "animate_controls_playlist_slideleft" : "animate_controls_playlist_slideright");
+	};
+	document.getElementById('controls_playlist_container').onclick = function(e) {
+		e.stopPropagation();
+	}
+	document.getElementsByTagName('body')[0].onclick = function() {
+		if(playlistVisible)
+			document.getElementById('button_playlist').onclick();
+	}
 
-		//Start the animation
-		animateUpdate.start();
+	//Start the animation
+	animateUpdate.start();
 
-		system.setDestroy(function(p_callback) {
-			animateUpdate.stop();
-			animateUpdate.setCallback(null);
-			vis = null;
-			animateUpdate = null
-			fpsCounter = null;
-			timebar = null;
-			timebar_scrub = null;
-			
-			if(system.isMethod(p_callback))
-				p_callback();
-		});
-	})(this, document);
+	system.setDestroy(function(p_callback) {
+		animateUpdate.stop();
+		animateUpdate.setCallback(null);
+		vis = null;
+		animateUpdate = null
+		fpsCounter = null;
+		timebar = null;
+		timebar_scrub = null;
+		
+		if(system.isMethod(p_callback))
+			p_callback();
+	});
+	
+}(this, document));
 </script>

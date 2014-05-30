@@ -5,7 +5,6 @@
  - [ ] Playlist editing
  - [ ] Prev/Next controls
  - [ ] Add "previous audio" buffer
+ - [ ] Improve control position and animation
  - [x] Remove HTML DOM methods and fields from Spectrum
  - [x] Test HTML5 canvas vs HTML DOM efficiency
- 
- - [ ] This space intentionally left BLANK!
