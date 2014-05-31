@@ -31,7 +31,7 @@
 		this.playlist = null;
 		
 		//Lets load the first theme, ever
-		this.loadTheme("themes/minimalist_canvas.html");
+		this.loadTheme("themes/minimalist.html");
 	};
 
 	System.prototype = {
