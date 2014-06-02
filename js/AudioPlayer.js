@@ -107,24 +107,6 @@
 				};
 				this.fields.nextBuffer = null;
 				worker.postMessage(p_file);
-				
-//				var reader = new FileReader();
-//				reader.onload = function() {
-//					self.fields.ctx.decodeAudioData(reader.result, function(p_buffer) {
-//						system.addMessage("Loaded!");
-//						console.log(p_buffer);
-//						self.fields.nextBuffer = p_buffer;
-//						self.state.isNextBufferLoaded = true;
-//						if(system.isMethod(p_callback))
-//							p_callback();
-//					}, function(e) { //Fail call
-//						system.addError("Failed to decode audio (" + e + ")");
-//					});
-//				};
-//				this.fields.nextBuffer = null;
-//				system.addMessage("Loading audio from file...");
-//
-//				reader.readAsArrayBuffer(p_file);
 			},
 			
 			//*********************************************************************************** Playback
