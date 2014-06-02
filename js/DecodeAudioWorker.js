@@ -1,6 +1,10 @@
-(function(window, document, undefined) {
-	var DecodeAudioWorker = function() {
+(function(self, undefined) {
+	self.onmessage = function(event) {
+		var reader = new FileReaderSync();
+		var buffer = reader.readAsArrayBuffer(event.data);
 		
+		//Can't use audiocontext here
+		
+		self.postMessage(buffer);
 	};
-	DecodeAudioWorker();
-}(this, document));
+}(this));

@@ -207,7 +207,7 @@
 	};
 
 	//Setup callbacks and pages
-	vis.setAnimation(visAnimations.bars);
+	vis.setAnimation(visAnimations.lines);
 	
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum
@@ -294,6 +294,5 @@
 		if(system.isMethod(p_callback))
 			p_callback();
 	});
-	
 }(this, document));
 </script>

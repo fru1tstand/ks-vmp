@@ -86,16 +86,17 @@
 				system.addMessage("Loading audio from site...");
 				request.send();
 			},
-			loadBufferFromFile: function(p_file, p_callback, p_progCallback) {
+			loadBufferFromFile: function(p_file, p_callback) {
 				var self = this;
 				
 				if(!this.isReady())
 					return system.addError("Audio context has not been set");
 				
-				var reader = new FileReader();
-				reader.onload = function() {
-					self.fields.ctx.decodeAudioData(reader.result, function(p_buffer) {
+				var worker = new Worker("js/DecodeAudioWorker.js");
+				worker.onmessage = function(event) {
+					self.fields.ctx.decodeAudioData(event.data, function(p_buffer) {
 						system.addMessage("Loaded!");
+						
 						self.fields.nextBuffer = p_buffer;
 						self.state.isNextBufferLoaded = true;
 						if(system.isMethod(p_callback))
@@ -104,14 +105,26 @@
 						system.addError("Failed to decode audio (" + e + ")");
 					});
 				};
-				reader.onprogress = function(e) {
-					if(system.isMethod(p_progCallback) && e.lengthComputable)
-						p_progCallback(e.loaded / e.total * 100);
-				};
 				this.fields.nextBuffer = null;
-				system.addMessage("Loading audio from file...");
-
-				reader.readAsArrayBuffer(p_file);
+				worker.postMessage(p_file);
+				
+//				var reader = new FileReader();
+//				reader.onload = function() {
+//					self.fields.ctx.decodeAudioData(reader.result, function(p_buffer) {
+//						system.addMessage("Loaded!");
+//						console.log(p_buffer);
+//						self.fields.nextBuffer = p_buffer;
+//						self.state.isNextBufferLoaded = true;
+//						if(system.isMethod(p_callback))
+//							p_callback();
+//					}, function(e) { //Fail call
+//						system.addError("Failed to decode audio (" + e + ")");
+//					});
+//				};
+//				this.fields.nextBuffer = null;
+//				system.addMessage("Loading audio from file...");
+//
+//				reader.readAsArrayBuffer(p_file);
 			},
 			
 			//*********************************************************************************** Playback
