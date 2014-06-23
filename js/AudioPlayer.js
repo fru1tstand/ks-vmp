@@ -15,7 +15,8 @@
 				playSource: null,
 				
 				analyser: null,
-				analyserData: null
+				analyserData: null,
+				gain: null
 		};
 		
 		this.events = {
@@ -53,7 +54,20 @@
 		if(window.AudioContext == null)
 			return system.addError("Web Audio API is not supported on this browser.");
 		
+		//This layout is mapped like so: Buffer -> Analyser -> Gain (Volume) -> Speaker
+		//Create context
 		this.fields.ctx = new AudioContext();
+		
+		//Create gain node (Volume)
+		this.fields.gain = this.fields.ctx.createGain();
+		this.fields.gain.connect(this.fields.ctx.destination); //Output gain to speaker
+		
+		//Create analyser node (FFT)
+		this.fields.analyser = this.fields.ctx.createAnalyser();
+		this.fields.analyserData = new Uint8Array(this.fields.analyser.frequencyBinCount);
+		this.fields.analyser.minDecibels = -70;
+		this.fields.analyser.maxDecibels = 0;
+		this.fields.analyser.connect(this.fields.gain); //Output analyser to gain
 	};
 
 	AudioPlayer.prototype = {
@@ -104,6 +118,7 @@
 					}, function(e) { //Fail call
 						system.addError("Failed to decode audio (" + e + ")");
 					});
+					worker.terminate();
 				};
 				this.fields.nextBuffer = null;
 				worker.postMessage(p_file);
@@ -144,6 +159,7 @@
 				
 				if(!this.state.isPlaying) {
 					this.fields.playSource = this.fields.ctx.createBufferSource();
+					this.fields.playSource.connect(this.fields.analyser);
 					
 					//Chrome bug #349543 @ https://code.google.com/p/chromium/issues/detail?id=349543
 //					iv_audioPlaySource.onended = function() {
@@ -153,13 +169,7 @@
 					
 					this.events.onEnded = p_options.onComplete;
 					
-					this.fields.analyser = this.fields.ctx.createAnalyser();
-					this.fields.analyser.minDecibels = -70;
-					this.fields.analyser.maxDecibels = 0;
-					this.fields.analyser.connect(this.fields.ctx.destination);
-					
 					this.fields.playSource.buffer = this.fields.currentBuffer;
-					this.fields.playSource.connect(this.fields.analyser);
 					
 					system.addMessage("Playing audio");
 
@@ -173,7 +183,6 @@
 					this.state.playTimeStarted = this.fields.ctx.currentTime;
 					this.state.isPlaying = true;
 					
-					this.fields.analyserData = new Uint8Array(this.fields.analyser.frequencyBinCount);
 					this.events.checkOnEnded();
 				}
 			},
@@ -230,14 +239,22 @@
 			clearNextBuffer: function() {
 				this.state.isNextBufferLoaded = false;
 			},
+			setVolume: function(p_vol) {
+				this.fields.gain.gain.value = p_vol;
+			},
 			
 			//*********************************************************************************** Getters
+			
 			/**
-			 * Returns if web audio api is supported in the browser.
+			 * @returns if web audio api is supported in the browser.
 			 */
 			isReady: function() {
 				return (this.fields.ctx != null);
 			},
+			/**
+			 * Gets the current frequency data from the analyser
+			 * @returns {Uint8Array}
+			 */
 			getFrequencyData: function() {
 				if(this.fields.analyser == null)
 					return new Array(1);
@@ -245,27 +262,51 @@
 				this.fields.analyser.getByteFrequencyData(this.fields.analyserData);
 				return this.fields.analyserData;
 			},
+			/**
+			 * Gets current play time in seconds
+			 * @returns {Number}
+			 */
 			getPlayTime: function() {
 				if(this.state.isPlaying)
 					return this.state.playTimeSaved + (this.fields.ctx.currentTime - this.state.playTimeStarted);
 				else
 					return this.state.playTimeSaved;
 			},
+			/**
+			 * Gets the current length of the audio buffer in seconds, or 0 if null
+			 * @returns {Number}
+			 */
 			getCurrentAudioLength: function() {
 				if(this.fields.currentBuffer != null)
 					return this.fields.currentBuffer.duration;
 				else
 					return 0;
 			},
+			/**
+			 * Returns true if play can be called with no error
+			 * @returns {Boolean}
+			 */
 			isAudioReady: function() {
 				return this.state.isCurrentBufferLoaded;
 			},
+			/**
+			 * Returns true if playNext can be called with no error
+			 * @returns {Boolean}
+			 */
 			isAudioQueueReady: function() {
 				return this.state.isNextBufferLoaded;
 			},
+			/**
+			 * Returns true if audio is playing
+			 * @returns {Boolean}
+			 */
 			isPlaying: function() {
 				return this.state.isPlaying;
 			},
+			/**
+			 * Returns true if audio is paused (versus stopped)
+			 * @returns {Boolean}
+			 */
 			isPaused: function() {
 				return this.state.isPaused;
 			}
