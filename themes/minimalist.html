@@ -44,18 +44,14 @@
 	}
 	#controls button:hover { border-color: #333; color: #333; }
 	#controls_container {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		height: 30px;
-		animation: controls_slidedown 0.3s ease-in-out forwards;
-		-webkit-animation: controls_slidedown 0.3s ease-in-out forwards;
+		opacity: 0;
+		animation: controls_fadeout 0.3s ease-in-out forwards;
+		-webkit-animation: controls_fadeout 0.3s ease-in-out forwards;
 	}
 	#controls { text-align:center; margin-top: 40px; height: 100%; }
 	#controls_container:hover {
-		animation: controls_slideup 0.3s ease-in-out forwards;
-		-webkit-animation: controls_slideup 0.3s ease-in-out forwards;
+		animation: controls_fadein 0.3s ease-in-out forwards;
+		-webkit-animation: controls_fadein 0.3s ease-in-out forwards;
 		color: #333;
 	}
 	
@@ -69,7 +65,7 @@
 	}
 
 	#controls_playlist {
-		width: 500px;
+		width: 300px;
 		height: 100%;
 	}
 	.controls_playlist {
@@ -94,17 +90,56 @@
 	
 	/*CSS animations*/
 		/* #controls_playlist */
-	@keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
-	@-webkit-keyframes playlist_slideleft {from { width: 0px; } to { width: 500px }}
-	@keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
-	@-webkit-keyframes playlist_slideright {from { width: 500px; } to { width: 0px }}
+	@keyframes playlist_slideleft {from { width: 0px; } to { width: 300px }}
+	@-webkit-keyframes playlist_slideleft {from { width: 0px; } to { width: 300px }}
+	@keyframes playlist_slideright {from { width: 300px; } to { width: 0px }}
+	@-webkit-keyframes playlist_slideright {from { width: 300px; } to { width: 0px }}
 	
 	
 		/* #controls */
-	@keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
-	@-webkit-keyframes controls_slideup {from { height: 30px; } to { height: 160px; }}
-	@keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
-	@-webkit-keyframes controls_slidedown {from { height: 160px; } to { height: 30px; }}
+	@keyframes controls_fadein {from { opacity: 0; } to { opacity: 1; }}
+	@-webkit-keyframes controls_fadein {from { opacity: 0; } to { opacity: 1; }}
+	@keyframes controls_fadeout {from { opacity: 1; } to { opacity: 0; }}
+	@-webkit-keyframes controls_fadeout {from { opacity: 1; } to { opacity: 0; }}
+	
+		/* #inVolume range control */
+	#inVolume {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		height: 15px;
+		background-color: transparent;
+	}
+	
+	#inVolume::-webkit-slider-runnable-track {
+		height: 6px;
+		background-color: transparent;
+		border: 1px solid #999;
+		border-radius: 3px;
+	}
+	#inVolume::-moz-range-track {
+		height: 6px;
+		background-color: transparent;
+		border: 1px solid #999;
+		border-radius: 3px;
+	}
+	
+	#inVolume::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		height: 12px;
+		width: 1px;
+		margin-top: -3px;
+		border: none;
+		background: #CCC;
+	}
+	#inVolume::-moz-range-thumb {
+		height: 12px;
+		width: 1px;
+		border: none;
+		background: #CCC;
+	}
+	#inVolume:focus {
+		outline: none;
+	}
 </style>
 
 <div id="spectrum_push"></div>
@@ -120,6 +155,9 @@
 <span id="fps" style="color:#FFF"></span>
 	<div>
 		<input type="file" id="input_songs" webkitdirectory multiple>
+	</div>
+	<div>
+		<input type="range" min="0" max="100" id="inVolume" value=100 style="width:100%" />
 	</div>
 </div>
 
@@ -245,6 +283,10 @@
 	document.getElementById('input_songs').onchange = function() {
  		system.playlist.add(this.files);
 	};
+	document.getElementById('inVolume').oninput = function() {
+		console.log(this.value);
+		system.audioPlayer.setVolume(this.value/100);
+	};
 
 	//Make buttons do things
 	document.getElementById('button_stop').onclick = function() {
@@ -294,5 +336,14 @@
 		if(system.isMethod(p_callback))
 			p_callback();
 	});
+
+	window.toggleAnimation = function() {
+		if(vis.events.onUpdate == visAnimations.levels)
+			vis.setAnimation(visAnimations.bars);
+		else if(vis.events.onUpdate == visAnimations.bars)
+			vis.setAnimation(visAnimations.lines);
+		else
+			vis.setAnimation(visAnimations.levels);
+	};
 }(this, document));
 </script>
