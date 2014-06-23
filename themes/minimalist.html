@@ -18,11 +18,12 @@
 	
 	#spectrum_push { height:50px; }
 	#spectrum { height: 500px; text-align: center; width: 100%; }
+	#spectrum_container { height: 500px; }
 	
-	#timebar 		{ background-color: transparent; cursor: pointer; }
+	#timebar 		{ background-color: transparent; cursor: pointer;}
 	#timebar:hover 	{ background-color: #191919; }
 	#timebar_pos 	{ height: 20px; background-color: #111; width: 0; }
-	#time_total, #time_current { overflow: visible; display: inline-block; }
+	#time_total, #time_current { overflow: visible; display: inline-block; height: 20px; line-height: 20px;}
 	#time_total 	{ float: left; margin: 0 0 0 10px; }
 	#time_current 	{ float: right; text-align: right; margin: -20px 10px 0 0; }
 	
@@ -143,7 +144,7 @@
 </style>
 
 <div id="spectrum_push"></div>
-<div class="container">
+<div class="container" id="spectrum_container">
 	<canvas id="spectrum"></canvas>
 </div>
 
@@ -151,8 +152,8 @@
 	<div id="time_total"></div><div id="timebar_pos"></div><div id="time_current"></div>
 </div>
 
-<div class="container" id="spectrum_container">
-<span id="fps" style="color:#FFF"></span>
+<div class="container">
+	<span id="fps" style="color:#FFF"></span>
 	<div>
 		<input type="file" id="input_songs" webkitdirectory multiple>
 	</div>
