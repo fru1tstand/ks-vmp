@@ -27,21 +27,25 @@
 	#time_total 	{ float: left; margin: 0 0 0 10px; }
 	#time_current 	{ float: right; text-align: right; margin: -20px 10px 0 0; }
 	
-	#controls button {
+	.music_control {
+		width: 160px;
 		background-color: transparent;
+		cursor: pointer;
+		outline: none;
+		height: 80px;
+		font-weight: bold;
+		font-size: 22px;
+		color: #151515;
+		margin: 0 10px;
+		display: inline-block;
+	}
+	#control_volume {
+		margin-bottom: 5px;
+	}
+	#controls button {
 		border: 1px solid #151515;
 		border-left:none;
 		border-right: none;
-		height: 80px;
-		width: 160px;
-		color: #151515;
-		font-weight: bold;
-		font-size: 22px;
-		cursor: pointer;
-		outline: 0;
-		outline-style: none;
-		outline-width: 0;
-		margin: 0 10px;
 	}
 	#controls button:hover { border-color: #333; color: #333; }
 	#controls_container {
@@ -49,7 +53,7 @@
 		animation: controls_fadeout 0.3s ease-in-out forwards;
 		-webkit-animation: controls_fadeout 0.3s ease-in-out forwards;
 	}
-	#controls { text-align:center; margin-top: 40px; height: 100%; }
+	#controls { text-align:center; margin-top: 40px; }
 	#controls_container:hover {
 		animation: controls_fadein 0.3s ease-in-out forwards;
 		-webkit-animation: controls_fadein 0.3s ease-in-out forwards;
@@ -109,38 +113,40 @@
 		-moz-appearance: none;
 		height: 15px;
 		background-color: transparent;
+		width: 25%;
 	}
 	
 	#inVolume::-webkit-slider-runnable-track {
 		height: 6px;
 		background-color: transparent;
-		border: 1px solid #999;
+		border: 1px solid #333;
 		border-radius: 3px;
 	}
 	#inVolume::-moz-range-track {
 		height: 6px;
 		background-color: transparent;
-		border: 1px solid #999;
+		border: 1px solid #333;
 		border-radius: 3px;
 	}
 	
 	#inVolume::-webkit-slider-thumb {
 		-webkit-appearance: none;
 		height: 12px;
-		width: 1px;
-		margin-top: -3px;
-		border: none;
-		background: #CCC;
+		width: 12px;
+		margin-top: -4px;
+		border: 1px solid #999;
+		background: #000;
+		border-radius: 6px;
 	}
 	#inVolume::-moz-range-thumb {
 		height: 12px;
-		width: 1px;
-		border: none;
-		background: #CCC;
+		width: 12px;
+		border: 1px solid #999;
+		background: #000;
 	}
-	#inVolume:focus {
-		outline: none;
-	}
+/* 	#inVolume:focus { */
+/* 		outline: none; */
+/* 	} */
 </style>
 
 <div id="spectrum_push"></div>
@@ -157,13 +163,11 @@
 	<div>
 		<input type="file" id="input_songs" webkitdirectory multiple>
 	</div>
-	<div>
-		<input type="range" min="0" max="100" id="inVolume" value=100 style="width:100%" />
-	</div>
 </div>
 
 <div id="controls_container">
 	<div id="controls">
+		<div id="control_volume" class="container"><input type="range" min="0" max="100" id="inVolume" value=100 /></div>
 		<button id="button_play" class="music_control"><i class="fa fa-play"></i></button>
 		<button id="button_stop" class="music_control"><i class="fa fa-stop"></i></button>
 		<button id="button_playlist" class="music_control"><i class="fa fa-list"></i></button>
