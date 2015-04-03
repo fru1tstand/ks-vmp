@@ -161,7 +161,7 @@
 <div class="container">
 	<span id="fps" style="color:#FFF"></span>
 	<div>
-		<input type="file" id="input_songs" webkitdirectory multiple>
+		<input type="file" id="input_songs" webkitdirectory multiple />
 	</div>
 </div>
 
@@ -181,9 +181,9 @@
 </div>
 
 
-<script src="/visualmusicproject/js/Spectrum.js"></script>
-<script src="/visualmusicproject/js/AnimateUpdate.js"></script>
-<script src="/visualmusicproject/js/Playlist.js"></script>
+<script src="/js/Spectrum.js"></script>
+<script src="/js/AnimateUpdate.js"></script>
+<script src="/js/Playlist.js"></script>
 <script>
 (function(window, document, undefined) {
 	
@@ -250,7 +250,7 @@
 	};
 
 	//Setup callbacks and pages
-	vis.setAnimation(visAnimations.lines);
+	vis.setAnimation(visAnimations.bars);
 	
 	animateUpdate.setCallback(function(pDiff) {
 		//Update spectrum
@@ -264,7 +264,8 @@
 		currentTime.innerHTML = (Math.floor(cPlayTime/60) + ":" + ((cPlayTime % 60 < 10) ? "0" : "") + Math.floor(cPlayTime % 60));
 		
 		//Calculate time bar
-		timePosition.style.width = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100) + "%";
+		var widthPercent = Math.min(cPlayTime / system.audioPlayer.getCurrentAudioLength() * 100, 100);
+		timePosition.style.width = ((isNaN(widthPercent)) ? 0 : widthPercent) + "%";
 		
 		//Display song time
 		cPlayTime = system.audioPlayer.getCurrentAudioLength();
@@ -320,11 +321,11 @@
 	};
 	document.getElementById('controls_playlist_container').onclick = function(e) {
 		e.stopPropagation();
-	}
+	};
 	document.getElementsByTagName('body')[0].onclick = function() {
 		if(playlistVisible)
 			document.getElementById('button_playlist').onclick();
-	}
+	};
 
 	//Start the animation
 	animateUpdate.start();
@@ -333,7 +334,7 @@
 		animateUpdate.stop();
 		animateUpdate.setCallback(null);
 		vis = null;
-		animateUpdate = null
+		animateUpdate = null;
 		fpsCounter = null;
 		timebar = null;
 		timebar_scrub = null;
